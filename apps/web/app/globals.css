@@ -1,0 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+:root { --ink:#18221f; --paper:#f3f0e8; --lime:#c8f169; --coral:#f47d63; --line:#cbd0c3; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--paper); color:var(--ink); font-family:'Space Grotesk',sans-serif; }
+.shell { min-height:100vh; max-width:1180px; margin:auto; padding:28px 5vw 54px; display:flex; flex-direction:column; }
+.topbar { display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--line); padding-bottom:20px; font-family:'DM Mono',monospace; font-size:12px; text-transform:uppercase; letter-spacing:.04em; }
+.mark { background:var(--ink); color:var(--lime); padding:8px 10px; font-weight:500; }
+.status { display:flex; align-items:center; gap:8px; color:#64716b; }.status i { width:7px; height:7px; background:#6abf69; border-radius:50%; display:block; }
+.intro { padding:clamp(70px,12vh,145px) 0 90px; max-width:760px; }.kicker { color:#6b766f; font:12px 'DM Mono',monospace; text-transform:uppercase; }.intro h1 { font-size:clamp(52px,8vw,98px); line-height:.92; letter-spacing:-.04em; margin:20px 0 30px; font-weight:600; }.intro h1 em { color:#d9644d; font-style:normal; }.lede { max-width:520px; font-size:18px; line-height:1.5; color:#5b6760; }.actions { display:flex; gap:12px; flex-wrap:wrap; margin-top:34px; }.actions a { padding:14px 18px; text-decoration:none; font-weight:600; }.primary { background:var(--ink); color:var(--lime); }.primary span { margin-left:24px; }.secondary { border:1px solid var(--ink); color:var(--ink); }.metrics { border-top:1px solid var(--line); display:grid; grid-template-columns:repeat(3,1fr); padding-top:24px; gap:20px; }.metrics div { display:flex; flex-direction:column; gap:8px; }.metrics strong { font-size:28px; }.metrics span { color:#6b766f; font:11px 'DM Mono',monospace; text-transform:uppercase; }
+@media (max-width:600px) { .shell { padding:20px 22px 36px; }.intro { padding:80px 0 70px; }.intro h1 { font-size:54px; }.lede { font-size:16px; }.metrics { grid-template-columns:1fr; gap:18px; } }
