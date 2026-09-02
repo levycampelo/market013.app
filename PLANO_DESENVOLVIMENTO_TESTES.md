@@ -24,10 +24,10 @@ market013.app/
 ├── backend/
 │   ├── functions/           # regras de domínio reutilizáveis pelas Vercel Functions
 │   └── ingestion/           # scripts de scraping/parsing de encartes
-├── database/                # migrations e seed do PostgreSQL/PostGIS
+├── backend/database/        # migrations e seed do PostgreSQL/PostGIS
 │   ├── migrations/
 │   └── seed.sql
-├── vercel.json              # configuração de build e região da Vercel
+├── apps/web/vercel.json     # configuração de build da Vercel
 ├── docs/
 └── tests/
     ├── unit/

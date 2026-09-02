@@ -42,7 +42,7 @@ npm run build:web
 
 ## Vercel
 
-O projeto usa a raiz do repositorio como Root Directory. A configuracao esta em `vercel.json`.
+O projeto usa `apps/web` como Root Directory. A configuracao esta em `apps/web/vercel.json`.
 
 1. Crie um projeto Vercel conectado a este repositorio.
 2. Adicione um PostgreSQL pela integracao Neon/Vercel.
