@@ -8,10 +8,13 @@ export default function ListPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [query, setQuery] = useState("");
+  const [category, setCategory] = useState("Todas");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
+  function loadProducts() {
+    setLoading(true);
+    setError("");
     let active = true;
     fetch("/api/products")
       .then(async (response) => {
@@ -22,14 +25,24 @@ export default function ListPage() {
       .catch(() => { if (active) setError("Não foi possível carregar os produtos agora."); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, []);
+  }
+
+  useEffect(() => loadProducts(), []);
+
+  const categories = useMemo(() => [
+    "Todas",
+    ...Array.from(new Set(products.map((product) => product.category).filter(Boolean) as string[])).sort(),
+  ], [products]);
 
   const filteredProducts = useMemo(() => {
     const value = query.trim().toLocaleLowerCase("pt-BR");
-    if (!value) return products;
-    return products.filter((product) => [product.name, product.brand, product.category]
-      .filter(Boolean).join(" ").toLocaleLowerCase("pt-BR").includes(value));
-  }, [products, query]);
+    return products.filter((product) => {
+      const matchesCategory = category === "Todas" || product.category === category;
+      const matchesQuery = !value || [product.name, product.brand, product.category]
+        .filter(Boolean).join(" ").toLocaleLowerCase("pt-BR").includes(value);
+      return matchesCategory && matchesQuery;
+    });
+  }, [products, query, category]);
 
   const selectedProducts = products.filter((product) => quantities[product.id]);
   const itemCount = Object.values(quantities).reduce((total, quantity) => total + quantity, 0);
@@ -55,8 +68,15 @@ export default function ListPage() {
         <section className="product-picker" aria-label="Produtos disponíveis">
           <label className="search-label" htmlFor="product-search">Buscar produto</label>
           <input id="product-search" className="search-input" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="arroz, café, limpeza..." />
+          <div className="catalog-toolbar">
+            <label className="search-label" htmlFor="product-category">Categoria</label>
+            <select id="product-category" value={category} onChange={(event) => setCategory(event.target.value)}>
+              {categories.map((item) => <option key={item}>{item}</option>)}
+            </select>
+            <span className="result-count">{filteredProducts.length} resultado{filteredProducts.length === 1 ? "" : "s"}</span>
+          </div>
           {loading && <p className="list-message">Buscando produtos...</p>}
-          {error && <p className="list-message error-message">{error}</p>}
+          {error && <div className="list-message error-message"><p>{error}</p><button type="button" onClick={loadProducts}>Tentar novamente</button></div>}
           {!loading && !error && filteredProducts.length === 0 && <p className="list-message">Nenhum produto encontrado.</p>}
           <div className="product-grid">
             {filteredProducts.map((product) => {
