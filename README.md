@@ -52,3 +52,7 @@ Nunca versione `.env`, credenciais, `node_modules/`, `.next/` ou arquivos de bui
 ## Estado atual
 
 O projeto ainda esta em desenvolvimento. A validacao oficial deve ocorrer nos deploys Development/Preview da Vercel; Production sera configurado somente depois do beta.
+
+## Licenca
+
+Este projeto esta licenciado sob a [Licenca MIT](LICENSE).
