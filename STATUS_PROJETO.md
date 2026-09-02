@@ -17,6 +17,7 @@ Checklist de acompanhamento, baseado no [PLANO_DESENVOLVIMENTO_TESTES.md](PLANO_
   - [x] `vercel.json` com comandos de instalação/build
   - [x] Integração por `DATABASE_URL` com PostgreSQL Neon/Vercel
   - [x] Endpoint local `GET /api/health`
+  - [x] Configuração Vercel específica em `apps/web/vercel.json` para projetos com Root Directory `apps/web`
   - [x] TypeScript validado com `npm run typecheck`
   - [x] Build de produção local validado com `npm run build:web`
   - [x] Suíte Vitest executada com sucesso
@@ -24,6 +25,7 @@ Checklist de acompanhamento, baseado no [PLANO_DESENVOLVIMENTO_TESTES.md](PLANO_
 ## Fora do escopo neste momento
 
 - Nenhum deploy na Vercel foi executado nesta etapa.
+- A CLI da Vercel no WSL ainda está deslogada; é necessário executar `vercel login` nessa distribuição antes de criar o projeto remoto.
 - O plano gratuito da Vercel/Neon possui limites de execução, banco, armazenamento e tráfego que deverão ser revisados antes de produção.
 - O PostgreSQL local via Docker continua disponível para desenvolvimento e testes sem serviços externos.
 
@@ -71,4 +73,4 @@ Checklist de acompanhamento, baseado no [PLANO_DESENVOLVIMENTO_TESTES.md](PLANO_
 ### Fechamento
 - [ ] Pipeline de CI rodando unit + integration a cada PR
 - [ ] Empacotamento e publicação nas lojas (Google Play e App Store)
-- [ ] Deploy da versão web na Vercel
+- [ ] Reexecutar o deploy da versão web na Vercel após corrigir o comando de build
