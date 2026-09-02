@@ -54,7 +54,7 @@ export default function ListPage() {
 
   const selectedProducts = products.filter((product) => quantities[product.id]);
   const itemCount = Object.values(quantities).reduce((total, quantity) => total + quantity, 0);
-  const comparisonUrl = `/comparar?products=${selectedProducts.map((product) => product.id).join(",")}`;
+  const comparisonUrl = `/comparar?products=${selectedProducts.map((product) => `${product.id}:${quantities[product.id]}`).join(",")}`;
 
   function changeQuantity(productId: string, change: number) {
     setQuantities((current) => {

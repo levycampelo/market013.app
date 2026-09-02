@@ -1,30 +1,44 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { optimizeBasket, type Market, type MarketPrice, type BasketResult } from "../../../../backend/domain/optimizer";
 
 type Product = { id: string; name: string; brand: string | null; category: string | null };
-type Price = { id: string; product_id: string; price: number; source: string; observed_at: string; supermarket_name: string; supermarket_address: string };
+type Price = { id: string; product_id: string; supermarket_id: string; price: number; source: string; observed_at: string; supermarket_name: string; supermarket_address: string };
 
 export default function ComparePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [prices, setPrices] = useState<Record<string, Price[]>>({});
+  const [markets, setMarkets] = useState<Market[]>([]);
+  const [recommendation, setRecommendation] = useState<BasketResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const productIds = useMemo(() => typeof window === "undefined" ? [] : new URLSearchParams(window.location.search).get("products")?.split(",").filter(Boolean) ?? [], []);
+  const selectedItems = useMemo(() => typeof window === "undefined" ? [] : new URLSearchParams(window.location.search).get("products")?.split(",").filter(Boolean).map((value) => {
+    const [productId, quantity] = value.split(":");
+    return { productId, quantity: Math.max(1, Number(quantity) || 1) };
+  }) ?? [], []);
+  const productIds = selectedItems.map((item) => item.productId);
 
   useEffect(() => {
     if (productIds.length === 0) { setLoading(false); return; }
     Promise.all([
       fetch("/api/products").then((response) => response.json() as Promise<{ products: Product[] }>),
+      fetch("/api/markets").then((response) => response.json() as Promise<{ markets: Market[] }>),
       ...productIds.map(async (id) => [id, await fetch(`/api/prices?productId=${encodeURIComponent(id)}`).then((response) => response.json() as Promise<{ prices: Price[] }>)] as const),
     ])
-      .then(([productData, ...priceData]) => {
+      .then(([productData, marketData, ...priceData]) => {
         setProducts(productData.products.filter((product) => productIds.includes(product.id)));
-        setPrices(Object.fromEntries(priceData.map(([id, data]) => [id, data.prices])));
+        setMarkets(marketData.markets);
+        const groupedPrices = Object.fromEntries(priceData.map(([id, data]) => [id, data.prices]));
+        setPrices(groupedPrices);
+        const allPrices: MarketPrice[] = Object.values(groupedPrices).flat().map((price) => ({ productId: price.product_id, marketId: price.supermarket_id, price: price.price }));
+        setRecommendation(optimizeBasket(selectedItems, marketData.markets, allPrices, { fuelPricePerLiter: 0, vehicleKmPerLiter: 12 }));
       })
       .catch(() => setError("Não foi possível carregar a comparação agora."))
       .finally(() => setLoading(false));
-  }, [productIds]);
+  }, [selectedItems]);
+
+  const recommendationMarkets = recommendation?.marketIds.map((id) => markets.find((market) => market.id === id)?.name).filter(Boolean).join(" + ");
 
   return <main className="shell list-shell">
     <header className="topbar"><a className="mark" href="/">m013</a><span>Comparação</span></header>
@@ -32,6 +46,7 @@ export default function ComparePage() {
     {loading && <p className="list-message">Calculando comparação...</p>}
     {error && <p className="list-message error-message">{error}</p>}
     {!loading && !error && products.length === 0 && <p className="list-message">Volte à lista e escolha pelo menos um produto.</p>}
+    {!loading && !error && recommendation && recommendation.marketIds.length > 0 && <section className="recommendation"><p className="kicker">recomendação da cesta</p><h2>{recommendation.marketIds.length === 1 ? "Mais econômico comprar em" : "Cesta mista mais econômica"}</h2><strong>{recommendationMarkets}</strong><div className="recommendation-total"><span>Produtos</span><b>{new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(recommendation.productsTotal)}</b><span>Deslocamento</span><b>{new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(recommendation.travelCost)}</b><span>Total estimado</span><b>{new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(recommendation.total)}</b></div>{recommendation.missingProductIds.length > 0 && <p className="summary-empty">Sem preço para {recommendation.missingProductIds.length} item(ns) da lista.</p>}</section>}
     <section className="comparison-grid">{products.map((product) => <article className="comparison-item" key={product.id}>
       <div><p className="kicker">{product.category ?? "produto"}</p><h2>{product.name}</h2><p>{product.brand ?? "Marca não informada"}</p></div>
       {(prices[product.id] ?? []).length === 0 ? <p className="summary-empty">Nenhum preço aprovado encontrado.</p> : <ul>{prices[product.id].map((price) => <li key={price.id}><strong>{new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(price.price)}</strong><span>{price.supermarket_name}<br />{price.supermarket_address}</span></li>)}</ul>}
