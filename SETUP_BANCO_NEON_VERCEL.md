@@ -81,6 +81,14 @@ A migration cria:
 
 ## 6. Aplicar o seed
 
+Se o banco ja foi criado com a migration 0001, aplique tambem a migration de status antes do seed ou do deploy:
+
+```bash
+psql "${DATABASE_URL_UNPOOLED:-$DATABASE_URL}" \
+  -v ON_ERROR_STOP=1 \
+  -f backend/database/migrations/0002_price_status.sql
+```
+
 ```bash
 psql "${DATABASE_URL_UNPOOLED:-$DATABASE_URL}" \
   -v ON_ERROR_STOP=1 \

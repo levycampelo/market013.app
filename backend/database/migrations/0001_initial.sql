@@ -35,6 +35,7 @@ create table if not exists prices (
   supermarket_id uuid not null references supermarkets(id) on delete cascade,
   price numeric(10, 2) not null check (price >= 0),
   source text not null check (source in ('encarte', 'colaborativo')),
+  status text not null default 'aprovado' check (status in ('pendente', 'aprovado', 'rejeitado', 'expirado')),
   user_id uuid references users(id) on delete set null,
   observed_at timestamptz not null default now(),
   created_at timestamptz not null default now()

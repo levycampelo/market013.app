@@ -112,9 +112,11 @@ O ambiente oficial de desenvolvimento e preview usa PostgreSQL Neon integrado a 
 - [ ] Publicar um Preview e validar `/api/products`, `/api/markets`, `/api/prices?productId=...`, `/lista`, `/comparar` e `/contribuir`.
 - [ ] Confirmar no Neon que uma contribuicao manual entra com status `pendente`.
 
-## Fase 2 — Algoritmo da Cesta Otima
+## Fase 2 — Algoritmo da Cesta Otima — em andamento
 
 **Objetivo:** validar o diferencial do produto antes de investir em mapas ou automacoes.
+
+**Progresso atual:** motor de calculo com Haversine, custo de combustivel, cesta unica, cesta mista e itens sem preco implementado em `backend/domain/optimizer.ts`, com testes unitarios dos cenarios principais. Falta integrar o resultado a tela `/comparar` e validar no deploy Vercel.
 
 ### Entregas
 

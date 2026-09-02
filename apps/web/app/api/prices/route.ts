@@ -46,6 +46,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ price: rows[0] }, { status: 201 });
   } catch (error) {
     console.error("price_creation_error", error);
+    if (error instanceof Error && error.message.includes("status")) {
+      return NextResponse.json(
+        { error: "Banco desatualizado: aplique a migration 0002_price_status.sql no Neon" },
+        { status: 503 },
+      );
+    }
     return NextResponse.json({ error: "Não foi possível cadastrar o preço" }, { status: 500 });
   }
 }
