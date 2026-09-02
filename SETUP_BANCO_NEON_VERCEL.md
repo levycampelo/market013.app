@@ -1,31 +1,17 @@
 # Setup Completo do Banco — Neon + Vercel
 
-Este guia configura o PostgreSQL do ambiente de desenvolvimento e conecta a aplicação hospedada na Vercel ao banco Neon.
+Este guia configura o PostgreSQL remoto dos ambientes Development e Preview da Vercel usando Neon. O projeto nao depende de banco ou servidor local.
 
 ## 1. Pré-requisitos
 
 - Projeto criado no Neon ou pela integração da Vercel.
-- Cliente PostgreSQL instalado no WSL.
-- Projeto clonado localmente.
+- Acesso ao projeto na Vercel.
+- Acesso ao projeto Neon ou a integracao Neon/Vercel.
 - Nenhuma credencial real versionada no Git.
 
-Instale o cliente PostgreSQL se necessário:
+## 2. Configurar a Vercel
 
-```bash
-sudo apt update
-sudo apt install -y postgresql-client
-```
-
-## 2. Configurar o arquivo local
-
-Crie o arquivo local a partir do modelo:
-
-```bash
-cd /home/levy/market013.app
-cp .env.example .env.local
-```
-
-Edite `.env.local` e coloque a URL real do Neon:
+No projeto Vercel, abra **Settings → Environment Variables** e configure nos ambientes `Development` e `Preview`:
 
 ```env
 DATABASE_URL=postgresql://USER:PASSWORD@HOST/DATABASE?sslmode=require
@@ -33,22 +19,15 @@ AI_PROVIDER=mock
 AI_API_KEY=
 ```
 
-O arquivo `.env.local` e ignorado pelo Git. Nunca coloque uma senha real em `.env.example`, README, código ou commit.
+Use a URL pooled do Neon em `DATABASE_URL`. Nunca coloque uma senha real em `.env.example`, README, codigo ou commit.
 
-## 3. Testar a conexão
+## 3. Testar a conexao remota
 
-Carregue a variável sem exibir o valor:
+Valide no painel do Neon ou usando um cliente administrativo remoto, sem salvar a credencial no repositorio:
 
 ```bash
 set -a
-source .env.local
-set +a
-
-if [ -n "$DATABASE_URL" ]; then
-  echo "DATABASE_URL configurada"
-else
-  echo "DATABASE_URL ausente"
-fi
+echo "Confirme DATABASE_URL no ambiente Development da Vercel"
 ```
 
 Teste o banco:
@@ -150,7 +129,7 @@ No painel do projeto:
 Project → Settings → Environment Variables
 ```
 
-Crie ou edite:
+Crie ou edite nos ambientes `Development` e `Preview`:
 
 ```text
 DATABASE_URL
@@ -158,14 +137,7 @@ DATABASE_URL
 
 Use a URL pooled do Neon com `sslmode=require`.
 
-Inicialmente, marque:
-
-```text
-Preview
-Development
-```
-
-Depois que os testes forem aprovados, configure também `Production`.
+Production sera configurado somente depois da aprovacao do beta.
 
 Se a integração criar `POSTGRES_URL`, isso não substitui automaticamente `DATABASE_URL`. A aplicação atual procura `DATABASE_URL`.
 
@@ -234,8 +206,6 @@ Não versione:
 
 ```text
 .env
-.env.local
-.env.production
 DATABASE_URL
 DATABASE_URL_UNPOOLED
 PGPASSWORD
@@ -252,11 +222,11 @@ Se uma senha for exposta:
 ## Fluxo completo
 
 ```text
-Criar banco Neon
-        ↓
-Configurar .env.local localmente
-        ↓
-Testar conexão
+Criar banco Neon pela integracao da Vercel
+  ↓
+Configurar DATABASE_URL em Development e Preview
+  ↓
+Aplicar migration e seed no banco remoto
         ↓
 Ativar/verificar PostGIS
         ↓

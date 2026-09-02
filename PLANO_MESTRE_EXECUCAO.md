@@ -54,39 +54,34 @@ O MVP estara pronto para uma primeira turma de usuarios quando for possivel:
 - Estado real das APIs em producao, pois o status possui informacoes contraditorias.
 - Existencia das pastas e ferramentas de integracao/E2E mencionadas no plano anterior.
 
-### Decisao bloqueante de infraestrutura
+### Decisao de infraestrutura
 
-Escolher e registrar uma unica fonte oficial para o banco de producao:
-
-- **Opcao A:** PostgreSQL Neon integrado a Vercel, conforme os documentos do projeto.
-- **Opcao B:** Supabase self-hosted via Docker na VM registrada na infraestrutura.
-
-A implementacao nao deve manter caminhos paralelos. A escolha precisa definir URL, migrations, autenticacao, storage, backups, observabilidade e procedimento de restauracao. Ate essa decisao, tarefas de banco remoto ficam com status **bloqueado**.
+O ambiente oficial de desenvolvimento e preview usa PostgreSQL Neon integrado a Vercel. Nao sera mantido banco local via Docker. A configuracao deve definir `DATABASE_URL`, migrations, autenticacao, storage, backups e procedimento de restauracao para os ambientes Vercel.
 
 # Fases de execucao
 
 ## Fase 0 — Decisao e fundacao tecnica
 
-**Objetivo:** deixar o projeto executavel localmente e eliminar ambiguidades de infraestrutura.
+**Objetivo:** deixar o projeto executavel nos ambientes Development e Preview da Vercel.
 
 ### Entregas
 
-- Escolher a infraestrutura oficial de producao e documentar a decisao.
+- Configurar o projeto Vercel e o banco Neon do ambiente Development.
 - Confirmar comandos de desenvolvimento, typecheck, build e testes.
 - Configurar `.env.example` sem segredos e validar variaveis obrigatorias no startup.
-- Executar migrations e seed em banco local.
+- Executar migrations e seed no banco Neon do ambiente Development.
 - Criar dados minimos: 2 ou 3 supermercados, 10 a 20 produtos e precos variados.
 - Padronizar respostas e erros das Route Handlers.
 - Definir autenticacao minima e identificacao do usuario.
-- Criar ambientes separados para local, preview e producao.
+- Configurar os ambientes Development, Preview e Production na Vercel.
 - Configurar logs basicos e uma verificacao de saude do banco.
 
 ### Criterios de aceite
 
-- Uma pessoa nova consegue instalar dependencias e subir a aplicacao seguindo o README.
+- Uma pessoa nova consegue configurar o projeto Vercel seguindo o README.
 - `typecheck`, build e testes passam.
 - `GET /api/health` retorna sucesso quando aplicacao e banco estao disponiveis e falha de forma diagnosticavel quando o banco nao esta.
-- O seed permite testar o comparador sem servicos externos.
+- O seed permite testar o comparador no banco remoto de Development sem servicos externos de IA ou mapas.
 - Nenhum segredo esta versionado.
 
 ## Fase 1 — Modelo de dados, catalogo e API basica
@@ -282,8 +277,8 @@ A implementacao nao deve manter caminhos paralelos. A escolha precisa definir UR
 
 # Ordem pratica de trabalho
 
-1. Resolver a decisao Neon/Vercel versus Supabase self-hosted.
-2. Confirmar o que realmente sobe localmente e em producao.
+1. Configurar o projeto Vercel e o banco Neon de Development.
+2. Confirmar o que realmente sobe em Development e Preview.
 3. Fechar banco, seed, APIs e autenticacao minima.
 4. Implementar e testar o algoritmo da cesta.
 5. Entregar o fluxo web completo com cadastro manual de precos.
@@ -298,7 +293,7 @@ A implementacao nao deve manter caminhos paralelos. A escolha precisa definir UR
 A primeira entrega deve conter somente o necessario para provar valor:
 
 - [ ] Infraestrutura oficial decidida e documentada.
-- [ ] Banco local funcionando com migration e seed.
+- [ ] Banco Neon de Development funcionando com migration e seed.
 - [ ] API de produtos, mercados e precos.
 - [ ] Autenticacao ou sessao identificada minima.
 - [ ] Algoritmo da cesta implementado com testes.
@@ -307,7 +302,7 @@ A primeira entrega deve conter somente o necessario para provar valor:
 - [ ] Aceite de termos.
 - [ ] Cadastro manual de preco.
 - [ ] Testes unitarios, integracao e um E2E web.
-- [ ] Smoke test local e deploy de preview funcionando.
+- [ ] Smoke test em Development/Preview e deploy funcionando.
 
 # Definicao geral de pronto
 
@@ -317,7 +312,7 @@ Uma fase somente pode ser marcada como concluida quando:
 - existe teste adequado ao risco;
 - os estados de erro e ausencia de dados foram tratados;
 - a documentacao ou configuracao necessaria esta atualizada;
-- o fluxo foi validado localmente e, quando aplicavel, em preview;
+- o fluxo foi validado em Development e, quando aplicavel, em Preview;
 - nao depende de uma acao manual nao documentada;
 - metricas ou logs suficientes permitem diagnosticar falhas.
 
