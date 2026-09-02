@@ -32,6 +32,10 @@ Checklist de acompanhamento, baseado no [PLANO_DESENVOLVIMENTO_TESTES.md](PLANO_
   - [x] Suíte Vitest executada com sucesso
   - [x] Página principal publicada na Vercel
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+  - [x] API `/api/products` validada em produção com dados do banco remoto
+>>>>>>> aef7970 (apontamento do banco)
 
 ## Fora do escopo neste momento
 
@@ -62,8 +66,9 @@ Checklist de acompanhamento, baseado no [PLANO_DESENVOLVIMENTO_TESTES.md](PLANO_
 - [x] Criar o scaffold Next.js em `apps/web`
 - [x] Configurar `DATABASE_URL` e `.env.example`
 - [x] Criar migrations em `backend/database/migrations/` e seed local
-- [ ] Criar o banco Neon/Vercel e configurar `DATABASE_URL` no painel da Vercel
-- [ ] Aplicar migrations/seed no banco remoto quando o deploy for autorizado
+- [x] Criar o banco Neon/Vercel e configurar `DATABASE_URL` no painel da Vercel
+- [x] Aplicar migrations/seed no banco remoto
+- [x] Confirmar PostGIS ativo no banco remoto
 - [ ] Configurar ambiente de testes: Jest/Vitest, React Native Testing Library, Detox/Maestro, Playwright, Supertest
 - [ ] Rodar smoke test do servidor local `npm run dev` e `GET /api/health`
 - [ ] Criar camadas de abstração `ai-provider` e `maps-provider` (com mocks para testes)

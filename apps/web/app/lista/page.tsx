@@ -1,8 +1,78 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+
+type Product = { id: string; name: string; brand: string | null; category: string | null };
+
 export default function ListPage() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/products")
+      .then(async (response) => {
+        if (!response.ok) throw new Error("products request failed");
+        return (await response.json()) as { products: Product[] };
+      })
+      .then((data) => { if (active) setProducts(data.products); })
+      .catch(() => { if (active) setError("Não foi possível carregar os produtos agora."); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, []);
+
+  const filteredProducts = useMemo(() => {
+    const value = query.trim().toLocaleLowerCase("pt-BR");
+    if (!value) return products;
+    return products.filter((product) => [product.name, product.brand, product.category]
+      .filter(Boolean).join(" ").toLocaleLowerCase("pt-BR").includes(value));
+  }, [products, query]);
+
+  const selectedProducts = products.filter((product) => quantities[product.id]);
+  const itemCount = Object.values(quantities).reduce((total, quantity) => total + quantity, 0);
+
+  function changeQuantity(productId: string, change: number) {
+    setQuantities((current) => {
+      const nextQuantity = Math.max(0, (current[productId] ?? 0) + change);
+      const next = { ...current };
+      if (nextQuantity === 0) delete next[productId];
+      else next[productId] = nextQuantity;
+      return next;
+    });
+  }
+
   return (
-    <main className="shell">
+    <main className="shell list-shell">
       <header className="topbar"><a className="mark" href="/">m013</a><span>Minha lista</span></header>
-      <section className="intro"><p className="kicker">próximo passo</p><h1>Lista de compras</h1><p className="lede">A busca de produtos e o cálculo da cesta serão conectados ao PostgreSQL local e à API da Vercel.</p><div className="actions"><a className="primary" href="/">Voltar <span>←</span></a></div></section>
+      <section className="list-heading">
+        <div><p className="kicker">cesta de compras</p><h1>Monte sua lista.</h1><p className="lede">Escolha os produtos e veja onde a economia começa a fazer sentido.</p></div>
+        <div className="list-total"><strong>{itemCount}</strong><span>itens</span></div>
+      </section>
+      <div className="list-layout">
+        <section className="product-picker" aria-label="Produtos disponíveis">
+          <label className="search-label" htmlFor="product-search">Buscar produto</label>
+          <input id="product-search" className="search-input" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="arroz, café, limpeza..." />
+          {loading && <p className="list-message">Buscando produtos...</p>}
+          {error && <p className="list-message error-message">{error}</p>}
+          {!loading && !error && filteredProducts.length === 0 && <p className="list-message">Nenhum produto encontrado.</p>}
+          <div className="product-grid">
+            {filteredProducts.map((product) => {
+              const quantity = quantities[product.id] ?? 0;
+              return <article className={`product-row ${quantity ? "selected" : ""}`} key={product.id}>
+                <div><strong>{product.name}</strong><span>{[product.brand, product.category].filter(Boolean).join(" · ")}</span></div>
+                <div className="quantity-control"><button type="button" aria-label={`Remover ${product.name}`} onClick={() => changeQuantity(product.id, -1)}>-</button><output>{quantity}</output><button type="button" aria-label={`Adicionar ${product.name}`} onClick={() => changeQuantity(product.id, 1)}>+</button></div>
+              </article>;
+            })}
+          </div>
+        </section>
+        <aside className="list-summary"><p className="kicker">sua seleção</p>
+          {selectedProducts.length === 0 ? <p className="summary-empty">Sua lista está vazia. Adicione produtos para começar a comparação.</p> : <ul>{selectedProducts.map((product) => <li key={product.id}><span>{quantities[product.id]} × {product.name}</span><button type="button" onClick={() => changeQuantity(product.id, -quantities[product.id])}>remover</button></li>)}</ul>}
+          <button className="compare-button" type="button" disabled={selectedProducts.length === 0}>Comparar preços <span>→</span></button>
+        </aside>
+      </div>
     </main>
   );
 }
