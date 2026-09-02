@@ -145,9 +145,11 @@ O ambiente oficial de desenvolvimento e preview usa PostgreSQL Neon integrado a 
 - [ ] Testar `Usar minha localização` ou coordenadas manuais.
 - [ ] Alterar gasolina e consumo e confirmar recálculo do total e da economia líquida.
 
-## Fase 3 — Primeiro fluxo utilizavel na web
+## Fase 3 — Primeiro fluxo utilizavel na web — implementada
 
 **Objetivo:** entregar uma experiencia completa com dados manuais e seed.
+
+**Progresso atual:** onboarding global com aceite versionado de Termos de Uso e Politica de Privacidade implementado em `apps/web/app/consent-gate.tsx`. A lista, a contribuicao e a comparacao formam o primeiro fluxo web utilizavel; localizacao e camera permanecem sob acao explicita do usuario.
 
 ### Entregas
 
@@ -166,6 +168,13 @@ O ambiente oficial de desenvolvimento e preview usa PostgreSQL Neon integrado a 
 - Recusar geolocalizacao nao impede o uso: o fallback manual funciona.
 - O usuario consegue entender por que uma opcao foi recomendada.
 - O layout nao perde informacoes nem controles nos breakpoints suportados.
+
+### Validacao final no ambiente Vercel
+
+- [ ] Abrir uma sessao limpa e confirmar bloqueio ate o aceite dos termos.
+- [ ] Aceitar os termos e concluir lista, comparacao e contribuicao.
+- [ ] Recusar a localizacao e confirmar que coordenadas manuais continuam funcionando.
+- [ ] Testar desktop e celular no Preview da Vercel.
 
 ## Fase 4 — Contribuicao colaborativa e moderacao
 
