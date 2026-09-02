@@ -2,7 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-type Product = { id: string; name: string; brand: string | null; category: string | null };
+type Product = {
+  id: string;
+  name: string;
+  brand: string | null;
+  category: string | null;
+  lowest_price: number | null;
+  market_count: number;
+  latest_observed_at: string | null;
+};
 
 export default function ListPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -57,6 +65,16 @@ export default function ListPage() {
     });
   }
 
+  function formatPrice(price: number | null) {
+    if (price === null) return "Sem preço";
+    return `A partir de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(price)}`;
+  }
+
+  function formatObservedAt(date: string | null) {
+    if (!date) return "Ainda sem atualização";
+    return `Atualizado em ${new Intl.DateTimeFormat("pt-BR").format(new Date(date))}`;
+  }
+
   return (
     <main className="shell list-shell">
       <header className="topbar"><a className="mark" href="/">m013</a><span>Minha lista</span></header>
@@ -82,7 +100,7 @@ export default function ListPage() {
             {filteredProducts.map((product) => {
               const quantity = quantities[product.id] ?? 0;
               return <article className={`product-row ${quantity ? "selected" : ""}`} key={product.id}>
-                <div><strong>{product.name}</strong><span>{[product.brand, product.category].filter(Boolean).join(" · ")}</span></div>
+                <div><strong>{product.name}</strong><span>{[product.brand, product.category].filter(Boolean).join(" · ")}</span><span className="price-meta">{formatPrice(product.lowest_price)} · {product.market_count} mercado{product.market_count === 1 ? "" : "s"}</span><span>{formatObservedAt(product.latest_observed_at)}</span></div>
                 <div className="quantity-control"><button type="button" aria-label={`Remover ${product.name}`} onClick={() => changeQuantity(product.id, -1)}>-</button><output>{quantity}</output><button type="button" aria-label={`Adicionar ${product.name}`} onClick={() => changeQuantity(product.id, 1)}>+</button></div>
               </article>;
             })}

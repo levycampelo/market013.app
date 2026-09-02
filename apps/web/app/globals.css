@@ -23,3 +23,5 @@ body { margin:0; background:var(--paper); color:var(--ink); font-family:'Space G
 .error-message p { margin:0; }
 .error-message button { border:1px solid var(--ink); background:transparent; color:var(--ink); padding:9px 12px; cursor:pointer; font:12px 'DM Mono',monospace; white-space:nowrap; }
 @media (max-width:600px) { .catalog-toolbar { align-items:flex-start; flex-wrap:wrap; }.catalog-toolbar .search-label { width:100%; }.result-count { margin-left:0; } }
+.product-row > div:first-child { min-width:0; }
+.product-row .price-meta { color:var(--ink); font-weight:600; margin-top:6px; }
