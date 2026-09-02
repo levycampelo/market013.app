@@ -13,10 +13,14 @@ Checklist de acompanhamento, baseado no [PLANO_DESENVOLVIMENTO_TESTES.md](PLANO_
   - [x] `docs/`
   - [x] `tests/unit/`, `tests/integration/`, `tests/e2e/`
 <<<<<<< HEAD
+<<<<<<< HEAD
 - [x] Arquitetura Vercel definida para ambiente gratuito
 =======
 - [x] Arquitetura Vercel definida para ambiente gratuito, sem deploy externo
 >>>>>>> adf714c (first commit)
+=======
+- [x] Arquitetura Vercel definida para ambiente gratuito
+>>>>>>> 477f45d (conexao bd)
   - [x] Next.js em `apps/web` para frontend web e Vercel Functions
   - [x] `vercel.json` com comandos de instalação/build
   - [x] Integração por `DATABASE_URL` com PostgreSQL Neon/Vercel
@@ -27,6 +31,7 @@ Checklist de acompanhamento, baseado no [PLANO_DESENVOLVIMENTO_TESTES.md](PLANO_
   - [x] Build de produção local validado com `npm run build:web`
   - [x] Suíte Vitest executada com sucesso
   - [x] Página principal publicada na Vercel
+<<<<<<< HEAD
 
 ## Fora do escopo neste momento
 
@@ -41,6 +46,13 @@ Checklist de acompanhamento, baseado no [PLANO_DESENVOLVIMENTO_TESTES.md](PLANO_
 
 - Nenhum deploy na Vercel foi executado nesta etapa.
 >>>>>>> adf714c (first commit)
+=======
+
+## Fora do escopo neste momento
+
+- O deploy da página principal foi realizado; ainda faltam a validação das APIs e a conexão com o banco remoto.
+- A CLI da Vercel no WSL ainda está deslogada; é necessário executar `vercel login` nessa distribuição antes de criar o projeto remoto.
+>>>>>>> 477f45d (conexao bd)
 - O plano gratuito da Vercel/Neon possui limites de execução, banco, armazenamento e tráfego que deverão ser revisados antes de produção.
 - O PostgreSQL local via Docker continua disponível para desenvolvimento e testes sem serviços externos.
 
@@ -89,7 +101,11 @@ Checklist de acompanhamento, baseado no [PLANO_DESENVOLVIMENTO_TESTES.md](PLANO_
 - [ ] Pipeline de CI rodando unit + integration a cada PR
 - [ ] Empacotamento e publicação nas lojas (Google Play e App Store)
 <<<<<<< HEAD
+<<<<<<< HEAD
 - [x] Deploy inicial da versão web na Vercel
 =======
 - [ ] Deploy da versão web na Vercel
 >>>>>>> adf714c (first commit)
+=======
+- [x] Deploy inicial da versão web na Vercel
+>>>>>>> 477f45d (conexao bd)
