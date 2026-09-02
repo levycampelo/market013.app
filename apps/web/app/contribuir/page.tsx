@@ -17,8 +17,8 @@ export default function ContributePage() {
   useEffect(() => {
     Promise.all([
       fetch("/api/auth/session"),
-      fetch("/api/products").then((response) => response.json() as Promise<{ products: Option[] }>),
-      fetch("/api/markets").then((response) => response.json() as Promise<{ markets: Option[] }>),
+      fetch("/api/products"),
+      fetch("/api/markets"),
     ]).then(async ([sessionResponse, productDataResponse, marketDataResponse]) => {
       if (sessionResponse.ok) { const session = await sessionResponse.json() as { user: { name: string; email: string } }; setUser(session.user); }
       const productData = await productDataResponse.json() as { products: Option[] };
