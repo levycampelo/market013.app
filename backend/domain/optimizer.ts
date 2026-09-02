@@ -98,3 +98,12 @@ function validateOptions(options: OptimizerOptions) {
   if (!Number.isFinite(options.fuelPricePerLiter) || options.fuelPricePerLiter < 0) throw new Error("fuelPricePerLiter must be non-negative");
   if (!Number.isFinite(options.vehicleKmPerLiter) || options.vehicleKmPerLiter <= 0) throw new Error("vehicleKmPerLiter must be positive");
 }
+
+export function bestSingleMarket(items: ShoppingItem[], markets: Market[], prices: MarketPrice[], options: OptimizerOptions): BasketResult {
+  let best: BasketResult | null = null;
+  for (const market of markets) {
+    const result = optimizeBasket(items, [market], prices.filter((price) => price.marketId === market.id), options);
+    if (result.lines.length > 0 && (!best || result.total < best.total)) best = result;
+  }
+  return best ?? emptyResult(items.filter((item) => item.quantity > 0).map((item) => item.productId));
+}

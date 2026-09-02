@@ -112,11 +112,11 @@ O ambiente oficial de desenvolvimento e preview usa PostgreSQL Neon integrado a 
 - [ ] Publicar um Preview e validar `/api/products`, `/api/markets`, `/api/prices?productId=...`, `/lista`, `/comparar` e `/contribuir`.
 - [ ] Confirmar no Neon que uma contribuicao manual entra com status `pendente`.
 
-## Fase 2 — Algoritmo da Cesta Otima — em andamento
+## Fase 2 — Algoritmo da Cesta Otima — implementada
 
 **Objetivo:** validar o diferencial do produto antes de investir em mapas ou automacoes.
 
-**Progresso atual:** motor de calculo com Haversine, custo de combustivel, cesta unica, cesta mista e itens sem preco implementado em `backend/domain/optimizer.ts`, com testes unitarios dos cenarios principais. Falta integrar o resultado a tela `/comparar` e validar no deploy Vercel.
+**Progresso atual:** motor de calculo com Haversine, custo de combustivel, cesta unica, cesta mista e itens sem preco implementado em `backend/domain/optimizer.ts`, com testes unitarios dos cenarios principais. O resultado esta integrado a tela `/comparar`; falta somente validar o fluxo no deploy Vercel.
 
 ### Entregas
 
@@ -138,6 +138,12 @@ O ambiente oficial de desenvolvimento e preview usa PostgreSQL Neon integrado a 
 - Coordenadas conhecidas produzem distancia dentro de uma tolerancia definida.
 - A recomendacao nunca apresenta economia liquida negativa como vantagem.
 - O resultado informa claramente quando foi calculado com dados incompletos.
+
+### Validacao final no ambiente Vercel
+
+- [ ] Publicar um Preview e confirmar recomendacao de mercado/cesta mista.
+- [ ] Testar `Usar minha localização` ou coordenadas manuais.
+- [ ] Alterar gasolina e consumo e confirmar recálculo do total e da economia líquida.
 
 ## Fase 3 — Primeiro fluxo utilizavel na web
 
