@@ -6,6 +6,7 @@ Para aplicar o schema e o seed no banco de desenvolvimento:
 
 ```bash
 psql "$DATABASE_URL" -f backend/database/migrations/0001_initial.sql
+psql "$DATABASE_URL" -f backend/database/migrations/0002_price_status.sql
 psql "$DATABASE_URL" -f backend/database/seed.sql
 ```
 

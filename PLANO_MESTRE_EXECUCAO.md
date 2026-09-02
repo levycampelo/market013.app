@@ -84,7 +84,7 @@ O ambiente oficial de desenvolvimento e preview usa PostgreSQL Neon integrado a 
 - O seed permite testar o comparador no banco remoto de Development sem servicos externos de IA ou mapas.
 - Nenhum segredo esta versionado.
 
-## Fase 1 — Modelo de dados, catalogo e API basica
+## Fase 1 — Modelo de dados, catalogo e API basica — implementada
 
 **Objetivo:** criar uma base confiavel para produtos, mercados e precos.
 
@@ -105,6 +105,12 @@ O ambiente oficial de desenvolvimento e preview usa PostgreSQL Neon integrado a 
 - A listagem mostra origem, data e confiabilidade/status do preco.
 - Precos invalidos, produtos inexistentes e mercados inexistentes sao rejeitados.
 - APIs possuem testes de contrato e integracao usando o banco de teste.
+
+### Validacao final no ambiente Vercel
+
+- [ ] Aplicar `backend/database/migrations/0002_price_status.sql` no Neon de Development.
+- [ ] Publicar um Preview e validar `/api/products`, `/api/markets`, `/api/prices?productId=...`, `/lista`, `/comparar` e `/contribuir`.
+- [ ] Confirmar no Neon que uma contribuicao manual entra com status `pendente`.
 
 ## Fase 2 — Algoritmo da Cesta Otima
 

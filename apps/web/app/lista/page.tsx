@@ -54,6 +54,7 @@ export default function ListPage() {
 
   const selectedProducts = products.filter((product) => quantities[product.id]);
   const itemCount = Object.values(quantities).reduce((total, quantity) => total + quantity, 0);
+  const comparisonUrl = `/comparar?products=${selectedProducts.map((product) => product.id).join(",")}`;
 
   function changeQuantity(productId: string, change: number) {
     setQuantities((current) => {
@@ -108,7 +109,7 @@ export default function ListPage() {
         </section>
         <aside className="list-summary"><p className="kicker">sua seleção</p>
           {selectedProducts.length === 0 ? <p className="summary-empty">Sua lista está vazia. Adicione produtos para começar a comparação.</p> : <ul>{selectedProducts.map((product) => <li key={product.id}><span>{quantities[product.id]} × {product.name}</span><button type="button" onClick={() => changeQuantity(product.id, -quantities[product.id])}>remover</button></li>)}</ul>}
-          <button className="compare-button" type="button" disabled={selectedProducts.length === 0}>Comparar preços <span>→</span></button>
+          {selectedProducts.length === 0 ? <button className="compare-button" type="button" disabled>Comparar preços <span>→</span></button> : <a className="compare-button" href={comparisonUrl}>Comparar preços <span>→</span></a>}
         </aside>
       </div>
     </main>
