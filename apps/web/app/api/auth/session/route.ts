@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { readSession } from "../../../../../lib/auth";
+import { readSession } from "../../../../lib/auth";
 
 export function GET(request: Request) {
   const user = readSession(request);

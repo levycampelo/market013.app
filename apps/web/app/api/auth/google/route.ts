@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
-import { createSession, sessionCookie } from "../../../../../lib/auth";
-import { getDatabase } from "../../../../../lib/db";
+import { createSession, sessionCookie } from "../../../../lib/auth";
+import { getDatabase } from "../../../../lib/db";
 
 export const dynamic = "force-dynamic";
 
