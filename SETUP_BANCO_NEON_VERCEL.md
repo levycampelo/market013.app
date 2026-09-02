@@ -147,6 +147,25 @@ Use a URL pooled do Neon com `sslmode=require`.
 
 Production sera configurado somente depois da aprovacao do beta.
 
+## 9. Configurar login Google
+
+No Google Cloud Console, crie um cliente OAuth do tipo **Web application** e cadastre como URI de redirecionamento autorizada:
+
+```text
+https://SEU_PROJETO.vercel.app/api/auth/google
+```
+
+Na Vercel, configure nos ambientes `Development` e `Preview`:
+
+```text
+GOOGLE_CLIENT_ID
+GOOGLE_CLIENT_SECRET
+AUTH_SECRET
+AUTH_URL=https://SEU_PROJETO.vercel.app/api/auth/google
+```
+
+`AUTH_SECRET` deve ser um valor longo e aleatorio. Nunca o publique no repositorio.
+
 Se a integração criar `POSTGRES_URL`, isso não substitui automaticamente `DATABASE_URL`. A aplicação atual procura `DATABASE_URL`.
 
 ## 9. Redeploy

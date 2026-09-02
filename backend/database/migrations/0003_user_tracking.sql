@@ -1,0 +1,1 @@
+create index if not exists prices_user_created_idx on prices (user_id, created_at);

@@ -73,6 +73,7 @@ O ambiente oficial de desenvolvimento e preview usa PostgreSQL Neon integrado a 
 - Criar dados minimos: 2 ou 3 supermercados, 10 a 20 produtos e precos variados.
 - Padronizar respostas e erros das Route Handlers.
 - Definir autenticacao minima e identificacao do usuario.
+- Configurar OAuth Google, sessao assinada e rastreamento de contribuicoes.
 - Configurar os ambientes Development, Preview e Production na Vercel.
 - Configurar logs basicos e uma verificacao de saude do banco.
 
@@ -83,6 +84,7 @@ O ambiente oficial de desenvolvimento e preview usa PostgreSQL Neon integrado a 
 - `GET /api/health` retorna sucesso quando aplicacao e banco estao disponiveis e falha de forma diagnosticavel quando o banco nao esta.
 - O seed permite testar o comparador no banco remoto de Development sem servicos externos de IA ou mapas.
 - Nenhum segredo esta versionado.
+- Contribuicoes exigem usuario autenticado e possuem limite basico anti-spam.
 
 ## Fase 1 — Modelo de dados, catalogo e API basica — implementada
 

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDatabase } from "../../../lib/db";
+import { readSession } from "../../../lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +27,8 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const user = readSession(request);
+    if (!user) return NextResponse.json({ error: "Entre com sua conta Google para contribuir" }, { status: 401 });
     const body = await request.json() as Record<string, unknown>;
     const productId = typeof body.productId === "string" ? body.productId : "";
     const supermarketId = typeof body.supermarketId === "string" ? body.supermarketId : "";
@@ -35,14 +38,17 @@ export async function POST(request: Request) {
     }
 
     const sql = getDatabase();
+    const recent = await sql`select count(*)::int as count from prices where user_id = ${user.id} and created_at > now() - interval '24 hours'`;
+    if (Number(recent[0]?.count ?? 0) >= 20) return NextResponse.json({ error: "Limite diário de contribuições atingido" }, { status: 429 });
     const rows = await sql`
-      insert into prices (id, product_id, supermarket_id, price, source, status)
-      select gen_random_uuid(), ${productId}, ${supermarketId}, ${price}, 'colaborativo', 'pendente'
+      insert into prices (id, product_id, supermarket_id, price, source, status, user_id)
+      select gen_random_uuid(), ${productId}, ${supermarketId}, ${price}, 'colaborativo', 'pendente', ${user.id}
       where exists (select 1 from products where id = ${productId})
         and exists (select 1 from supermarkets where id = ${supermarketId})
       returning id, product_id, supermarket_id, price::float8, source, status, observed_at
     `;
     if (rows.length === 0) return NextResponse.json({ error: "Produto ou mercado não encontrado" }, { status: 404 });
+    await sql`update users set score_contribuicoes = score_contribuicoes + 1 where id = ${user.id}`;
     return NextResponse.json({ price: rows[0] }, { status: 201 });
   } catch (error) {
     console.error("price_creation_error", error);
