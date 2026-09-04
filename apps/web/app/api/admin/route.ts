@@ -124,7 +124,7 @@ export async function PATCH(request: Request) {
 	const admin = readSession(request);
 	const denied = unauthorized(request);
 	if (denied) return denied;
-	if (!admin) return denied;
+	if (!admin) return NextResponse.json({ error: "Autenticação necessária" }, { status: 401 });
 
 	try {
 		const body = await request.json() as Record<string, unknown>;
@@ -158,7 +158,7 @@ export async function POST(request: Request) {
 	const admin = readSession(request);
 	const denied = unauthorized(request);
 	if (denied) return denied;
-	if (!admin) return denied;
+	if (!admin) return NextResponse.json({ error: "Autenticação necessária" }, { status: 401 });
 
 	try {
 		const body = await request.json() as Record<string, unknown>;
@@ -193,7 +193,7 @@ export async function DELETE(request: Request) {
 	const admin = readSession(request);
 	const denied = unauthorized(request);
 	if (denied) return denied;
-	if (!admin) return denied;
+	if (!admin) return NextResponse.json({ error: "Autenticação necessária" }, { status: 401 });
 
 	try {
 		const body = await request.json() as Record<string, unknown>;
@@ -235,7 +235,7 @@ export async function PUT(request: Request) {
 	const admin = readSession(request);
 	const denied = unauthorized(request);
 	if (denied) return denied;
-	if (!admin) return denied;
+	if (!admin) return NextResponse.json({ error: "Autenticação necessária" }, { status: 401 });
 
 	try {
 		const body = await request.json() as Record<string, unknown>;
