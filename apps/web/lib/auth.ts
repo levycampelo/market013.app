@@ -29,6 +29,13 @@ export function readSession(request: Request) {
     return session.exp > Date.now() ? session : null;
   } catch { return null; }
 }
+export function isAdmin(user: AuthUser) {
+  const configuredEmails = (process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+  return configuredEmails.includes(user.email.toLowerCase());
+}
 
 export function sessionCookie(value: string, maxAge = 60 * 60 * 24 * 30) {
   return `market013_session=${value}; Path=/; Max-Age=${maxAge}; HttpOnly; SameSite=Lax${process.env.NODE_ENV === "production" ? "; Secure" : ""}`;
