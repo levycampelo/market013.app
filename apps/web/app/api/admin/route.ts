@@ -16,6 +16,7 @@ export async function GET(request: Request) {
 	if (denied) return denied;
 
 	const status = new URL(request.url).searchParams.get("status");
+	const view = new URL(request.url).searchParams.get("view");
 	const allowedStatuses = ["pendente", "aprovado", "rejeitado", "expirado"];
 	if (status && !allowedStatuses.includes(status)) {
 		return NextResponse.json({ error: "Status inválido" }, { status: 400 });
@@ -23,6 +24,18 @@ export async function GET(request: Request) {
 
 	try {
 		const sql = getDatabase();
+		if (view === "clientes") {
+			const users = await sql`
+				select id, name, email, score_contribuicoes, created_at
+				from users
+				order by created_at desc
+				limit 500
+			`;
+			return NextResponse.json({ users });
+		}
+		if (view && view !== "precos") {
+			return NextResponse.json({ error: "Visualização inválida" }, { status: 400 });
+		}
 		const prices = status ? await sql`
 			select
 				pr.id,
@@ -102,5 +115,30 @@ export async function PATCH(request: Request) {
 	} catch (error) {
 		console.error("admin_price_update_error", error);
 		return NextResponse.json({ error: "Não foi possível atualizar o preço" }, { status: 500 });
+	}
+}
+
+export async function DELETE(request: Request) {
+	const denied = unauthorized(request);
+	if (denied) return denied;
+
+	try {
+		const body = await request.json() as Record<string, unknown>;
+		const priceId = typeof body.priceId === "string" ? body.priceId : "";
+		if (!priceId) return NextResponse.json({ error: "priceId é obrigatório" }, { status: 400 });
+
+		const sql = getDatabase();
+		const prices = await sql`
+			delete from prices
+			where id = ${priceId} and status = 'aprovado'
+			returning id
+		`;
+		if (prices.length === 0) {
+			return NextResponse.json({ error: "Somente preços aprovados podem ser deletados" }, { status: 404 });
+		}
+		return NextResponse.json({ deleted: true, priceId });
+	} catch (error) {
+		console.error("admin_price_delete_error", error);
+		return NextResponse.json({ error: "Não foi possível deletar o preço" }, { status: 500 });
 	}
 }
