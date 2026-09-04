@@ -23,7 +23,7 @@ export async function GET(request: Request) {
 
 	try {
 		const sql = getDatabase();
-		const prices = await sql`
+		const prices = status ? await sql`
 			select
 				pr.id,
 				pr.product_id,
@@ -41,7 +41,27 @@ export async function GET(request: Request) {
 			join products p on p.id = pr.product_id
 			join supermarkets s on s.id = pr.supermarket_id
 			left join users u on u.id = pr.user_id
-			${status ? sql`where pr.status = ${status}` : sql``}
+			where pr.status = ${status}
+			order by pr.created_at desc
+			limit 500
+		` : await sql`
+			select
+				pr.id,
+				pr.product_id,
+				p.name as product_name,
+				pr.supermarket_id,
+				s.name as supermarket_name,
+				pr.price::float8,
+				pr.source,
+				pr.status,
+				pr.observed_at,
+				pr.created_at,
+				u.name as contributor_name,
+				u.email as contributor_email
+			from prices pr
+			join products p on p.id = pr.product_id
+			join supermarkets s on s.id = pr.supermarket_id
+			left join users u on u.id = pr.user_id
 			order by pr.created_at desc
 			limit 500
 		`;
