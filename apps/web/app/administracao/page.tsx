@@ -34,9 +34,11 @@ export default function AdminPage() {
 	const [loading, setLoading] = useState(true);
 	const [editingMarketId, setEditingMarketId] = useState<string | null>(null);
 	const [marketName, setMarketName] = useState("");
+	const [marketCep, setMarketCep] = useState("");
 	const [marketAddress, setMarketAddress] = useState("");
 	const [marketLatitude, setMarketLatitude] = useState("");
 	const [marketLongitude, setMarketLongitude] = useState("");
+	const [cepLoading, setCepLoading] = useState(false);
 
 	async function loadPrices(selectedStatus = filter) {
 		setLoading(true);
@@ -131,9 +133,28 @@ export default function AdminPage() {
 		await loadMarkets();
 	}
 
+	async function lookupCep() {
+		const cep = marketCep.replace(/\D/g, "");
+		if (cep.length !== 8) return;
+		setCepLoading(true);
+		setError("");
+		try {
+			const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+			if (!response.ok) throw new Error("ViaCEP indisponível");
+			const data = await response.json() as { erro?: boolean; logradouro?: string; bairro?: string; localidade?: string; uf?: string };
+			if (data.erro) throw new Error("CEP não encontrado");
+			setMarketAddress([data.logradouro, data.bairro, data.localidade && data.uf ? `${data.localidade} - ${data.uf}` : data.localidade].filter(Boolean).join(", "));
+		} catch {
+			setError("Não foi possível encontrar esse CEP. Confira o número e tente novamente.");
+		} finally {
+			setCepLoading(false);
+		}
+	}
+
 	function clearMarketForm() {
 		setEditingMarketId(null);
 		setMarketName("");
+		setMarketCep("");
 		setMarketAddress("");
 		setMarketLatitude("");
 		setMarketLongitude("");
@@ -142,6 +163,7 @@ export default function AdminPage() {
 	function editMarket(market: Market) {
 		setEditingMarketId(market.id);
 		setMarketName(market.name);
+		setMarketCep("");
 		setMarketAddress(market.address);
 		setMarketLatitude(String(market.latitude));
 		setMarketLongitude(String(market.longitude));
@@ -212,6 +234,8 @@ export default function AdminPage() {
 		<section className="form-heading"><p className="kicker">rede de mercados</p><h1>{editingMarketId ? "Alterar mercado." : "Cadastrar mercado."}</h1><p className="lede">Adicione ou atualize nome, endereço e coordenadas para que o mercado participe do comparador.</p></section>
 		<form className="market-form" onSubmit={saveMarket}>
 			<label>Nome do mercado<input required value={marketName} onChange={(event) => setMarketName(event.target.value)} placeholder="Mercado do Bairro" /></label>
+			<label>CEP<input required inputMode="numeric" maxLength={9} value={marketCep} onChange={(event) => setMarketCep(event.target.value)} onBlur={() => void lookupCep()} placeholder="00000-000" /></label>
+			{cepLoading && <p className="form-hint">Buscando endereço pelo CEP...</p>}
 			<label>Endereço<input required value={marketAddress} onChange={(event) => setMarketAddress(event.target.value)} placeholder="Rua, número, bairro e cidade" /></label>
 			<div className="market-coordinates"><label>Latitude<input required type="number" step="any" min="-90" max="90" value={marketLatitude} onChange={(event) => setMarketLatitude(event.target.value)} placeholder="-23.55052" /></label><label>Longitude<input required type="number" step="any" min="-180" max="180" value={marketLongitude} onChange={(event) => setMarketLongitude(event.target.value)} placeholder="-46.63331" /></label></div>
 			<div className="market-form-actions"><button className="compare-button" type="submit">{editingMarketId ? "Salvar alterações" : "Cadastrar mercado"} <span>→</span></button>{editingMarketId && <button className="secondary cancel-market-button" type="button" onClick={clearMarketForm}>Cancelar</button>}</div>
