@@ -11,25 +11,34 @@ type Price = {
 	status: string;
 	observed_at: string;
 	created_at: string;
+	total_count: number;
 	contributor_name: string | null;
 	contributor_email: string | null;
 };
 
-type AdminData = { prices: Price[]; summary: { status: string; count: number }[] };
+type AdminData = { prices: Price[]; summary: { status: string; count: number }[]; counts: { markets: number; clients: number; prices: number; reports: number }[]; page: number; pageSize: number; total: number };
 type Client = { id: string; name: string; email: string; score_contribuicoes: number; created_at: string };
 type ClientsData = { users: Client[] };
 type Market = { id: string; name: string; address: string; latitude: number; longitude: number; created_at: string };
 type MarketsData = { markets: Market[] };
+type AuditLog = { id: string; action: string; entity_type: string; entity_id: string; previous_data: Record<string, unknown> | null; new_data: Record<string, unknown> | null; created_at: string; admin_name: string; admin_email: string };
+type AuditData = { logs: AuditLog[] };
 type SessionResponse = { user: { name: string; email: string } | null };
 
 export default function AdminPage() {
 	const [data, setData] = useState<AdminData | null>(null);
 	const [clients, setClients] = useState<ClientsData | null>(null);
 	const [markets, setMarkets] = useState<MarketsData | null>(null);
+	const [audit, setAudit] = useState<AuditData | null>(null);
 	const [user, setUser] = useState<SessionResponse["user"]>(null);
 	const [sessionChecked, setSessionChecked] = useState(false);
-	const [section, setSection] = useState<"precos" | "clientes" | "mercados">("precos");
+	const [section, setSection] = useState<"precos" | "clientes" | "mercados" | "historico">("precos");
 	const [filter, setFilter] = useState("pendente");
+	const [search, setSearch] = useState("");
+	const [source, setSource] = useState("");
+	const [fromDate, setFromDate] = useState("");
+	const [toDate, setToDate] = useState("");
+	const [page, setPage] = useState(1);
 	const [error, setError] = useState("");
 	const [loading, setLoading] = useState(true);
 	const [editingMarketId, setEditingMarketId] = useState<string | null>(null);
@@ -43,7 +52,15 @@ export default function AdminPage() {
 	async function loadPrices(selectedStatus = filter) {
 		setLoading(true);
 		setError("");
-		const suffix = selectedStatus === "todos" ? "" : `?status=${selectedStatus}`;
+		const params = new URLSearchParams();
+		if (selectedStatus !== "todos") params.set("status", selectedStatus);
+		if (search.trim()) params.set("q", search.trim());
+		if (source) params.set("source", source);
+		if (fromDate) params.set("from", fromDate);
+		if (toDate) params.set("to", toDate);
+		params.set("page", String(page));
+		params.set("pageSize", "20");
+		const suffix = `?${params.toString()}`;
 		const response = await fetch(`/api/admin${suffix}`);
 		const body = await response.json() as AdminData & { error?: string };
 		if (!response.ok) setError(body.error ?? "Não foi possível carregar a administração");
@@ -71,6 +88,16 @@ export default function AdminPage() {
 		setLoading(false);
 	}
 
+	async function loadAudit() {
+		setLoading(true);
+		setError("");
+		const response = await fetch("/api/admin?view=historico");
+		const body = await response.json() as AuditData & { error?: string };
+		if (!response.ok) setError(body.error ?? "Não foi possível carregar o histórico");
+		else setAudit(body);
+		setLoading(false);
+	}
+
 	useEffect(() => {
 		fetch("/api/auth/session")
 			.then(async (response) => {
@@ -86,6 +113,10 @@ export default function AdminPage() {
 				setLoading(false);
 			});
 	}, []);
+
+	useEffect(() => {
+		if (sessionChecked && user && section === "precos") void loadPrices();
+	}, [page]);
 
 	async function updateStatus(priceId: string, status: "aprovado" | "rejeitado") {
 		const response = await fetch("/api/admin", {
@@ -198,11 +229,22 @@ export default function AdminPage() {
 	}
 
 	const countFor = (status: string) => data?.summary.find((item) => item.status === status)?.count ?? 0;
-	const selectSection = (nextSection: "precos" | "clientes" | "mercados") => {
+	const totalPages = Math.max(1, Math.ceil((data?.total ?? 0) / (data?.pageSize ?? 20)));
+	const globalCounts = data?.counts[0];
+	const selectSection = (nextSection: "precos" | "clientes" | "mercados" | "historico") => {
 		setSection(nextSection);
 		if (nextSection === "clientes" && !clients) void loadClients();
 		if (nextSection === "mercados" && !markets) void loadMarkets();
+		if (nextSection === "historico" && !audit) void loadAudit();
 	};
+	const auditAction = (action: string) => ({
+		price_approved: "Preço aprovado",
+		price_rejected: "Preço rejeitado",
+		price_deleted: "Preço excluído",
+		market_created: "Mercado cadastrado",
+		market_updated: "Mercado alterado",
+		market_deleted: "Mercado excluído",
+	}[action] ?? action);
 
 	return <main className="shell admin-shell">
 		<header className="topbar"><a className="mark" href="/">m013</a><span>Administração</span></header>
@@ -214,15 +256,18 @@ export default function AdminPage() {
 			<button className={section === "precos" ? "active" : ""} onClick={() => selectSection("precos")}>Preços para revisar</button>
 			<button className={section === "clientes" ? "active" : ""} onClick={() => selectSection("clientes")}>Clientes cadastrados</button>
 			<button className={section === "mercados" ? "active" : ""} onClick={() => selectSection("mercados")}>Cadastrar mercado</button>
+			<button className={section === "historico" ? "active" : ""} onClick={() => selectSection("historico")}>Histórico</button>
 		</nav>
 		{section === "precos" && <>
 		<section className="form-heading"><p className="kicker">controle de qualidade</p><h1>Preços para revisar.</h1><p className="lede">Aprove contribuições confiáveis e rejeite registros que precisam ser corrigidos antes de aparecerem no comparador.</p></section>
+		<section className="admin-counts" aria-label="Contagem geral"><div><strong>{globalCounts?.markets ?? 0}</strong><span>mercados</span></div><div><strong>{globalCounts?.clients ?? 0}</strong><span>clientes</span></div><div><strong>{globalCounts?.prices ?? 0}</strong><span>preços</span></div><div><strong>{globalCounts?.reports ?? 0}</strong><span>reports</span></div></section>
 		<section className="admin-summary" aria-label="Resumo dos preços">
 			<button className={filter === "pendente" ? "active" : ""} onClick={() => { setFilter("pendente"); void loadPrices("pendente"); }}><strong>{countFor("pendente")}</strong><span>Pendentes</span></button>
 			<button className={filter === "aprovado" ? "active" : ""} onClick={() => { setFilter("aprovado"); void loadPrices("aprovado"); }}><strong>{countFor("aprovado")}</strong><span>Aprovados</span></button>
 			<button className={filter === "rejeitado" ? "active" : ""} onClick={() => { setFilter("rejeitado"); void loadPrices("rejeitado"); }}><strong>{countFor("rejeitado")}</strong><span>Rejeitados</span></button>
 			<button className={filter === "todos" ? "active" : ""} onClick={() => { setFilter("todos"); void loadPrices("todos"); }}><strong>{Object.values(data?.summary ?? {}).reduce((total, item) => total + item.count, 0)}</strong><span>Todos</span></button>
 		</section>
+		<div className="admin-filters"><label>Buscar<input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} onKeyDown={(event) => { if (event.key === "Enter") void loadPrices(); }} placeholder="produto, e-mail ou mercado" /></label><label>Origem<select value={source} onChange={(event) => { setSource(event.target.value); setPage(1); }}><option value="">Todas</option><option value="encarte">Encarte</option><option value="colaborativo">Colaborativo</option></select></label><label>De<input type="date" value={fromDate} onChange={(event) => { setFromDate(event.target.value); setPage(1); }} /></label><label>Até<input type="date" value={toDate} onChange={(event) => { setToDate(event.target.value); setPage(1); }} /></label><button className="filter-button" type="button" onClick={() => { setPage(1); void loadPrices(); }}>Filtrar</button></div>
 		{error && <p className="form-feedback error-message">{error}</p>}
 		{loading && <p className="admin-empty">Carregando registros...</p>}
 		{!loading && !error && data?.prices.length === 0 && <p className="admin-empty">Nenhum preço neste filtro.</p>}
@@ -235,6 +280,7 @@ export default function AdminPage() {
 				{price.status === "aprovado" && filter === "aprovado" && <div className="admin-actions"><button className="delete-button" onClick={() => void deleteApprovedPrice(price.id)}>Deletar preço</button></div>}
 			</article>)}
 		</section>}
+		{!loading && data && data.total > 0 && <nav className="pagination" aria-label="Paginação de preços"><span>{data.total} registro{data.total === 1 ? "" : "s"} · página {page} de {totalPages}</span><div><button disabled={page <= 1} onClick={() => { setPage((current) => current - 1); }}>Anterior</button><button disabled={page >= totalPages} onClick={() => { setPage((current) => current + 1); }}>Próxima</button></div></nav>}
 		</>}
 		{section === "clientes" && <>
 		<section className="form-heading"><p className="kicker">contas identificadas</p><h1>Clientes cadastrados.</h1><p className="lede">Pessoas que já entraram no market013 com a conta Google.</p></section>
@@ -261,6 +307,12 @@ export default function AdminPage() {
 		{loading && <p className="admin-empty">Carregando mercados...</p>}
 		{!loading && !error && markets?.markets.length === 0 && <p className="admin-empty">Nenhum mercado cadastrado.</p>}
 		{!loading && markets && markets.markets.length > 0 && <section className="admin-table" aria-label="Mercados cadastrados">{markets.markets.map((market) => <article className="admin-row market-row" key={market.id}><div><strong>{market.name}</strong><span>{market.address}</span></div><div><strong>{market.latitude}, {market.longitude}</strong><span>coordenadas</span></div><div className="admin-actions"><button className="approve-button" onClick={() => editMarket(market)}>Alterar</button><button className="delete-button" onClick={() => void deleteMarket(market.id)}>Excluir</button></div></article>)}</section>}
+		</>}
+		{section === "historico" && <>
+		<section className="form-heading"><p className="kicker">rastreabilidade</p><h1>Histórico administrativo.</h1><p className="lede">Acompanhe quem alterou preços e mercados e quais dados foram registrados antes e depois de cada ação.</p></section>
+		{loading && <p className="admin-empty">Carregando histórico...</p>}
+		{!loading && !error && audit?.logs.length === 0 && <p className="admin-empty">Nenhuma ação administrativa registrada.</p>}
+		{!loading && audit && audit.logs.length > 0 && <section className="admin-table" aria-label="Histórico administrativo">{audit.logs.map((log) => <article className="admin-row audit-row" key={log.id}><div><strong>{auditAction(log.action)}</strong><span>{log.entity_type} · {log.entity_id}</span></div><div><strong>{log.admin_name}</strong><span>{log.admin_email}</span></div><div><span>{new Date(log.created_at).toLocaleString("pt-BR")}</span><small>antes: {JSON.stringify(log.previous_data ?? null)}</small><small>depois: {JSON.stringify(log.new_data ?? null)}</small></div></article>)}</section>}
 		</>}
 		</>}
 		<div className="actions"><a className="secondary" href="/">Voltar <span>←</span></a></div>
