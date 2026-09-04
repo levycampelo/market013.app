@@ -143,12 +143,29 @@ export default function AdminPage() {
 			if (!response.ok) throw new Error("ViaCEP indisponível");
 			const data = await response.json() as { erro?: boolean; logradouro?: string; bairro?: string; localidade?: string; uf?: string };
 			if (data.erro) throw new Error("CEP não encontrado");
-			setMarketAddress([data.logradouro, data.bairro, data.localidade && data.uf ? `${data.localidade} - ${data.uf}` : data.localidade].filter(Boolean).join(", "));
+			const address = [data.logradouro, data.bairro, data.localidade && data.uf ? `${data.localidade} - ${data.uf}` : data.localidade].filter(Boolean).join(", ");
+			setMarketAddress(address);
+			await lookupCoordinates(address);
 		} catch {
 			setError("Não foi possível encontrar esse CEP. Confira o número e tente novamente.");
 		} finally {
 			setCepLoading(false);
 		}
+	}
+
+	async function lookupCoordinates(address: string) {
+		const response = await fetch("/api/admin/geocode", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ address }),
+		});
+		const body = await response.json() as { latitude?: number; longitude?: number; error?: string };
+		if (!response.ok) {
+			setError(body.error ?? "Não foi possível localizar as coordenadas");
+			return;
+		}
+		setMarketLatitude(String(body.latitude));
+		setMarketLongitude(String(body.longitude));
 	}
 
 	function clearMarketForm() {
