@@ -150,6 +150,12 @@ export async function PATCH(request: Request) {
 		return NextResponse.json({ price: prices[0] });
 	} catch (error) {
 		console.error("admin_price_update_error", error);
+		if (error instanceof Error && error.message.includes("admin_audit_logs")) {
+			return NextResponse.json(
+				{ error: "Banco desatualizado: aplique a migration 0004_admin_audit_logs.sql no Neon" },
+				{ status: 503 },
+			);
+		}
 		return NextResponse.json({ error: "Não foi possível atualizar o preço" }, { status: 500 });
 	}
 }

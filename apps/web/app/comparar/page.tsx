@@ -15,6 +15,7 @@ export default function ComparePage() {
   const [vehicleEfficiency, setVehicleEfficiency] = useState("12");
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
+  const [allowedMarketIds, setAllowedMarketIds] = useState<string[] | null>(null);
   const [locationMessage, setLocationMessage] = useState("Sem localização: deslocamento não incluído");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -25,6 +26,13 @@ export default function ComparePage() {
   const productIds = selectedItems.map((item) => item.productId);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const value = params.get("markets");
+    setAllowedMarketIds(params.has("markets") ? (value ? value.split(",").filter(Boolean) : []) : null);
+  }, []);
+
+  useEffect(() => {
     if (productIds.length === 0) { setLoading(false); return; }
     Promise.all([
       fetch("/api/products").then((response) => response.json() as Promise<{ products: Product[] }>),
@@ -33,7 +41,7 @@ export default function ComparePage() {
     ])
       .then(([productData, marketData, ...priceData]) => {
         setProducts(productData.products.filter((product) => productIds.includes(product.id)));
-        setMarkets(marketData.markets);
+        setMarkets(allowedMarketIds ? marketData.markets.filter((market) => allowedMarketIds.includes(market.id)) : marketData.markets);
         const groupedPrices = Object.fromEntries(priceData.map(([id, data]) => [id, data.prices]));
         setPrices(groupedPrices);
         const allPrices: MarketPrice[] = Object.values(groupedPrices).flat().map((price) => ({ productId: price.product_id, marketId: price.supermarket_id, price: price.price }));
@@ -41,7 +49,7 @@ export default function ComparePage() {
       })
       .catch(() => setError("Não foi possível carregar a comparação agora."))
       .finally(() => setLoading(false));
-  }, [selectedItems]);
+  }, [selectedItems, allowedMarketIds]);
 
   const recommendation = useMemo<BasketResult | null>(() => {
     if (allPrices.length === 0) return null;
@@ -82,7 +90,7 @@ export default function ComparePage() {
     {!loading && !error && recommendation && recommendation.marketIds.length > 0 && <section className="recommendation"><p className="kicker">recomendação da cesta</p><h2>{recommendation.marketIds.length === 1 ? "Mais econômico comprar em" : "Cesta mista mais econômica"}</h2><strong>{recommendationMarkets}</strong><div className="recommendation-total"><span>Produtos</span><b>{new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(recommendation.productsTotal)}</b><span>Deslocamento</span><b>{new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(recommendation.travelCost)}</b><span>Total estimado</span><b>{new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(recommendation.total)}</b><span>Economia líquida</span><b>{new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(economy)}</b></div><p className="recommendation-note">{recommendation.travelCost > 0 ? "O total inclui gasolina estimada para visitar os mercados." : "Informe sua localização para incluir o custo de deslocamento."}</p>{recommendation.missingProductIds.length > 0 && <p className="summary-empty">Sem preço para {recommendation.missingProductIds.length} item(ns) da lista.</p>}</section>}
     <section className="comparison-grid">{products.map((product) => <article className="comparison-item" key={product.id}>
       <div><p className="kicker">{product.category ?? "produto"}</p><h2>{product.name}</h2><p>{product.brand ?? "Marca não informada"}</p></div>
-      {(prices[product.id] ?? []).length === 0 ? <p className="summary-empty">Nenhum preço aprovado encontrado.</p> : <ul>{prices[product.id].map((price) => <li key={price.id}><strong>{new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(price.price)}</strong><span>{price.supermarket_name}<br />{price.supermarket_address}</span></li>)}</ul>}
+      {(prices[product.id] ?? []).filter((price) => !allowedMarketIds || allowedMarketIds.includes(price.supermarket_id)).length === 0 ? <p className="summary-empty">Nenhum preço aprovado encontrado nos mercados próximos.</p> : <ul>{prices[product.id].filter((price) => !allowedMarketIds || allowedMarketIds.includes(price.supermarket_id)).map((price) => <li key={price.id}><strong>{new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(price.price)}</strong><span>{price.supermarket_name}<br />{price.supermarket_address}</span></li>)}</ul>}
     </article>)}</section>
     <div className="actions"><a className="secondary" href="/lista">Voltar para lista <span>←</span></a></div>
   </main>;

@@ -11,6 +11,8 @@ type Product = {
   market_count: number;
   latest_observed_at: string | null;
 };
+type Market = { id: string; name: string; latitude: number; longitude: number };
+const MARKET_RADIUS_KM = 15;
 
 export default function ListPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -19,6 +21,10 @@ export default function ListPage() {
   const [category, setCategory] = useState("Todas");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [markets, setMarkets] = useState<Market[]>([]);
+  const [nearbyMarketIds, setNearbyMarketIds] = useState<string[] | null>(null);
+  const [locationMessage, setLocationMessage] = useState("Todos os mercados");
+  const [locationLoading, setLocationLoading] = useState(false);
 
   function loadProducts() {
     setLoading(true);
@@ -58,7 +64,45 @@ export default function ListPage() {
 
   const selectedProducts = products.filter((product) => quantities[product.id]);
   const itemCount = Object.values(quantities).reduce((total, quantity) => total + quantity, 0);
-  const comparisonUrl = `/comparar?products=${selectedProducts.map((product) => `${product.id}:${quantities[product.id]}`).join(",")}`;
+  const comparisonParams = new URLSearchParams({ products: selectedProducts.map((product) => `${product.id}:${quantities[product.id]}`).join(",") });
+  if (nearbyMarketIds) comparisonParams.set("markets", nearbyMarketIds.join(","));
+  const comparisonUrl = `/comparar?${comparisonParams.toString()}`;
+
+  function distanceKm(latitudeA: number, longitudeA: number, latitudeB: number, longitudeB: number) {
+    const radians = Math.PI / 180;
+    const latitudeDelta = (latitudeB - latitudeA) * radians;
+    const longitudeDelta = (longitudeB - longitudeA) * radians;
+    const value = Math.sin(latitudeDelta / 2) ** 2
+      + Math.cos(latitudeA * radians) * Math.cos(latitudeB * radians) * Math.sin(longitudeDelta / 2) ** 2;
+    return 6371 * 2 * Math.atan2(Math.sqrt(value), Math.sqrt(1 - value));
+  }
+
+  function useNearbyMarkets() {
+    if (!navigator.geolocation) {
+      setLocationMessage("Seu navegador não oferece geolocalização.");
+      return;
+    }
+    setLocationLoading(true);
+    setLocationMessage("Localizando mercados em até 15 km...");
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      try {
+        const response = await fetch("/api/markets");
+        if (!response.ok) throw new Error("markets request failed");
+        const data = await response.json() as { markets: Market[] };
+        const nearby = data.markets.filter((market) => distanceKm(position.coords.latitude, position.coords.longitude, market.latitude, market.longitude) <= MARKET_RADIUS_KM);
+        setMarkets(data.markets);
+        setNearbyMarketIds(nearby.map((market) => market.id));
+        setLocationMessage(nearby.length ? `${nearby.length} mercado${nearby.length === 1 ? "" : "s"} em até 15 km` : "Nenhum mercado encontrado em até 15 km");
+      } catch {
+        setLocationMessage("Não foi possível carregar os mercados próximos.");
+      } finally {
+        setLocationLoading(false);
+      }
+    }, () => {
+      setLocationLoading(false);
+      setLocationMessage("Localização recusada. Todos os mercados continuam disponíveis.");
+    });
+  }
 
   function changeQuantity(productId: string, change: number) {
     setQuantities((current) => {
@@ -87,6 +131,7 @@ export default function ListPage() {
         <div><p className="kicker">cesta de compras</p><h1>Monte sua lista.</h1><p className="lede">Escolha os produtos e veja onde a economia começa a fazer sentido.</p></div>
         <div className="list-total"><strong>{itemCount}</strong><span>itens</span></div>
       </section>
+      <section className="nearby-market-panel" aria-label="Mercados próximos"><div><p className="kicker">filtro por localização</p><strong>Mercados perto de mim</strong><span>{locationMessage}</span></div><button type="button" onClick={useNearbyMarkets} disabled={locationLoading}>{locationLoading ? "Localizando..." : "Usar minha localização"}</button>{nearbyMarketIds && <button type="button" className="nearby-reset" onClick={() => { setNearbyMarketIds(null); setLocationMessage("Todos os mercados"); }}>Limpar filtro</button>}</section>
       <div className="list-layout">
         <section className="product-picker" aria-label="Produtos disponíveis">
           <label className="search-label" htmlFor="product-search">Buscar produto</label>
