@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 type Price = {
 	id: string;
@@ -18,17 +18,25 @@ type Price = {
 type AdminData = { prices: Price[]; summary: { status: string; count: number }[] };
 type Client = { id: string; name: string; email: string; score_contribuicoes: number; created_at: string };
 type ClientsData = { users: Client[] };
+type Market = { id: string; name: string; address: string; latitude: number; longitude: number; created_at: string };
+type MarketsData = { markets: Market[] };
 type SessionResponse = { user: { name: string; email: string } | null };
 
 export default function AdminPage() {
 	const [data, setData] = useState<AdminData | null>(null);
 	const [clients, setClients] = useState<ClientsData | null>(null);
+	const [markets, setMarkets] = useState<MarketsData | null>(null);
 	const [user, setUser] = useState<SessionResponse["user"]>(null);
 	const [sessionChecked, setSessionChecked] = useState(false);
-	const [section, setSection] = useState<"precos" | "clientes">("precos");
+	const [section, setSection] = useState<"precos" | "clientes" | "mercados">("precos");
 	const [filter, setFilter] = useState("pendente");
 	const [error, setError] = useState("");
 	const [loading, setLoading] = useState(true);
+	const [editingMarketId, setEditingMarketId] = useState<string | null>(null);
+	const [marketName, setMarketName] = useState("");
+	const [marketAddress, setMarketAddress] = useState("");
+	const [marketLatitude, setMarketLatitude] = useState("");
+	const [marketLongitude, setMarketLongitude] = useState("");
 
 	async function loadPrices(selectedStatus = filter) {
 		setLoading(true);
@@ -48,6 +56,16 @@ export default function AdminPage() {
 		const body = await response.json() as ClientsData & { error?: string };
 		if (!response.ok) setError(body.error ?? "Não foi possível carregar os clientes");
 		else setClients(body);
+		setLoading(false);
+	}
+
+	async function loadMarkets() {
+		setLoading(true);
+		setError("");
+		const response = await fetch("/api/admin?view=mercados");
+		const body = await response.json() as MarketsData & { error?: string };
+		if (!response.ok) setError(body.error ?? "Não foi possível carregar os mercados");
+		else setMarkets(body);
 		setLoading(false);
 	}
 
@@ -96,10 +114,55 @@ export default function AdminPage() {
 		await loadPrices("aprovado");
 	}
 
+	async function saveMarket(event: FormEvent<HTMLFormElement>) {
+		event.preventDefault();
+		setError("");
+		const response = await fetch("/api/admin", {
+			method: editingMarketId ? "PUT" : "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ marketId: editingMarketId, name: marketName, address: marketAddress, latitude: Number(marketLatitude), longitude: Number(marketLongitude) }),
+		});
+		const body = await response.json() as { error?: string };
+		if (!response.ok) {
+			setError(body.error ?? "Não foi possível salvar o mercado");
+			return;
+		}
+		clearMarketForm();
+		await loadMarkets();
+	}
+
+	function clearMarketForm() {
+		setEditingMarketId(null);
+		setMarketName("");
+		setMarketAddress("");
+		setMarketLatitude("");
+		setMarketLongitude("");
+	}
+
+	function editMarket(market: Market) {
+		setEditingMarketId(market.id);
+		setMarketName(market.name);
+		setMarketAddress(market.address);
+		setMarketLatitude(String(market.latitude));
+		setMarketLongitude(String(market.longitude));
+	}
+
+	async function deleteMarket(marketId: string) {
+		if (!window.confirm("Excluir este mercado? Mercados com preços vinculados não podem ser excluídos.")) return;
+		const response = await fetch("/api/admin", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ marketId }) });
+		const body = await response.json() as { error?: string };
+		if (!response.ok) {
+			setError(body.error ?? "Não foi possível excluir o mercado");
+			return;
+		}
+		await loadMarkets();
+	}
+
 	const countFor = (status: string) => data?.summary.find((item) => item.status === status)?.count ?? 0;
-	const selectSection = (nextSection: "precos" | "clientes") => {
+	const selectSection = (nextSection: "precos" | "clientes" | "mercados") => {
 		setSection(nextSection);
 		if (nextSection === "clientes" && !clients) void loadClients();
+		if (nextSection === "mercados" && !markets) void loadMarkets();
 	};
 
 	return <main className="shell admin-shell">
@@ -111,6 +174,7 @@ export default function AdminPage() {
 		<nav className="admin-nav" aria-label="Seções da administração">
 			<button className={section === "precos" ? "active" : ""} onClick={() => selectSection("precos")}>Preços para revisar</button>
 			<button className={section === "clientes" ? "active" : ""} onClick={() => selectSection("clientes")}>Clientes cadastrados</button>
+			<button className={section === "mercados" ? "active" : ""} onClick={() => selectSection("mercados")}>Cadastrar mercado</button>
 		</nav>
 		{section === "precos" && <>
 		<section className="form-heading"><p className="kicker">controle de qualidade</p><h1>Preços para revisar.</h1><p className="lede">Aprove contribuições confiáveis e rejeite registros que precisam ser corrigidos antes de aparecerem no comparador.</p></section>
@@ -143,6 +207,19 @@ export default function AdminPage() {
 				<div><span className="admin-status status-aprovado">Google</span><small>Desde {new Date(client.created_at).toLocaleDateString("pt-BR")}</small></div>
 			</article>)}
 		</section>}
+		</>}
+		{section === "mercados" && <>
+		<section className="form-heading"><p className="kicker">rede de mercados</p><h1>{editingMarketId ? "Alterar mercado." : "Cadastrar mercado."}</h1><p className="lede">Adicione ou atualize nome, endereço e coordenadas para que o mercado participe do comparador.</p></section>
+		<form className="market-form" onSubmit={saveMarket}>
+			<label>Nome do mercado<input required value={marketName} onChange={(event) => setMarketName(event.target.value)} placeholder="Mercado do Bairro" /></label>
+			<label>Endereço<input required value={marketAddress} onChange={(event) => setMarketAddress(event.target.value)} placeholder="Rua, número, bairro e cidade" /></label>
+			<div className="market-coordinates"><label>Latitude<input required type="number" step="any" min="-90" max="90" value={marketLatitude} onChange={(event) => setMarketLatitude(event.target.value)} placeholder="-23.55052" /></label><label>Longitude<input required type="number" step="any" min="-180" max="180" value={marketLongitude} onChange={(event) => setMarketLongitude(event.target.value)} placeholder="-46.63331" /></label></div>
+			<div className="market-form-actions"><button className="compare-button" type="submit">{editingMarketId ? "Salvar alterações" : "Cadastrar mercado"} <span>→</span></button>{editingMarketId && <button className="secondary cancel-market-button" type="button" onClick={clearMarketForm}>Cancelar</button>}</div>
+		</form>
+		{error && <p className="form-feedback error-message">{error}</p>}
+		{loading && <p className="admin-empty">Carregando mercados...</p>}
+		{!loading && !error && markets?.markets.length === 0 && <p className="admin-empty">Nenhum mercado cadastrado.</p>}
+		{!loading && markets && markets.markets.length > 0 && <section className="admin-table" aria-label="Mercados cadastrados">{markets.markets.map((market) => <article className="admin-row market-row" key={market.id}><div><strong>{market.name}</strong><span>{market.address}</span></div><div><strong>{market.latitude}, {market.longitude}</strong><span>coordenadas</span></div><div className="admin-actions"><button className="approve-button" onClick={() => editMarket(market)}>Alterar</button><button className="delete-button" onClick={() => void deleteMarket(market.id)}>Excluir</button></div></article>)}</section>}
 		</>}
 		</>}
 		<div className="actions"><a className="secondary" href="/">Voltar <span>←</span></a></div>

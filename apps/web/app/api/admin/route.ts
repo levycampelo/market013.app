@@ -33,6 +33,14 @@ export async function GET(request: Request) {
 			`;
 			return NextResponse.json({ users });
 		}
+		if (view === "mercados") {
+			const markets = await sql`
+				select id, name, address, latitude, longitude, created_at
+				from supermarkets
+				order by name
+			`;
+			return NextResponse.json({ markets });
+		}
 		if (view && view !== "precos") {
 			return NextResponse.json({ error: "Visualização inválida" }, { status: 400 });
 		}
@@ -118,12 +126,55 @@ export async function PATCH(request: Request) {
 	}
 }
 
+export async function POST(request: Request) {
+	const denied = unauthorized(request);
+	if (denied) return denied;
+
+	try {
+		const body = await request.json() as Record<string, unknown>;
+		const name = typeof body.name === "string" ? body.name.trim() : "";
+		const address = typeof body.address === "string" ? body.address.trim() : "";
+		const latitude = typeof body.latitude === "number" ? body.latitude : Number(body.latitude);
+		const longitude = typeof body.longitude === "number" ? body.longitude : Number(body.longitude);
+		if (!name || !address || !Number.isFinite(latitude) || latitude < -90 || latitude > 90 || !Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
+			return NextResponse.json({ error: "Nome, endereço, latitude e longitude válidos são obrigatórios" }, { status: 400 });
+		}
+
+		const sql = getDatabase();
+		const markets = await sql`
+			insert into supermarkets (id, name, address, latitude, longitude)
+			select gen_random_uuid(), ${name}, ${address}, ${latitude}, ${longitude}
+			where not exists (
+				select 1 from supermarkets
+				where lower(name) = lower(${name}) and lower(address) = lower(${address})
+			)
+			returning id, name, address, latitude, longitude, created_at
+		`;
+		if (markets.length === 0) return NextResponse.json({ error: "Este mercado já está cadastrado" }, { status: 409 });
+		return NextResponse.json({ market: markets[0] }, { status: 201 });
+	} catch (error) {
+		console.error("admin_market_create_error", error);
+		return NextResponse.json({ error: "Não foi possível cadastrar o mercado" }, { status: 500 });
+	}
+}
+
 export async function DELETE(request: Request) {
 	const denied = unauthorized(request);
 	if (denied) return denied;
 
 	try {
 		const body = await request.json() as Record<string, unknown>;
+		const marketId = typeof body.marketId === "string" ? body.marketId : "";
+		if (marketId) {
+			const sql = getDatabase();
+			const linkedPrices = await sql`select count(*)::int as count from prices where supermarket_id = ${marketId}`;
+			if (Number(linkedPrices[0]?.count ?? 0) > 0) {
+				return NextResponse.json({ error: "Não é possível excluir um mercado que possui preços cadastrados" }, { status: 409 });
+			}
+			const markets = await sql`delete from supermarkets where id = ${marketId} returning id`;
+			if (markets.length === 0) return NextResponse.json({ error: "Mercado não encontrado" }, { status: 404 });
+			return NextResponse.json({ deleted: true, marketId });
+		}
 		const priceId = typeof body.priceId === "string" ? body.priceId : "";
 		if (!priceId) return NextResponse.json({ error: "priceId é obrigatório" }, { status: 400 });
 
@@ -140,5 +191,35 @@ export async function DELETE(request: Request) {
 	} catch (error) {
 		console.error("admin_price_delete_error", error);
 		return NextResponse.json({ error: "Não foi possível deletar o preço" }, { status: 500 });
+	}
+}
+
+export async function PUT(request: Request) {
+	const denied = unauthorized(request);
+	if (denied) return denied;
+
+	try {
+		const body = await request.json() as Record<string, unknown>;
+		const marketId = typeof body.marketId === "string" ? body.marketId : "";
+		const name = typeof body.name === "string" ? body.name.trim() : "";
+		const address = typeof body.address === "string" ? body.address.trim() : "";
+		const latitude = typeof body.latitude === "number" ? body.latitude : Number(body.latitude);
+		const longitude = typeof body.longitude === "number" ? body.longitude : Number(body.longitude);
+		if (!marketId || !name || !address || !Number.isFinite(latitude) || latitude < -90 || latitude > 90 || !Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
+			return NextResponse.json({ error: "Mercado, nome, endereço, latitude e longitude válidos são obrigatórios" }, { status: 400 });
+		}
+
+		const sql = getDatabase();
+		const markets = await sql`
+			update supermarkets
+			set name = ${name}, address = ${address}, latitude = ${latitude}, longitude = ${longitude}
+			where id = ${marketId}
+			returning id, name, address, latitude, longitude, created_at
+		`;
+		if (markets.length === 0) return NextResponse.json({ error: "Mercado não encontrado" }, { status: 404 });
+		return NextResponse.json({ market: markets[0] });
+	} catch (error) {
+		console.error("admin_market_update_error", error);
+		return NextResponse.json({ error: "Não foi possível alterar o mercado" }, { status: 500 });
 	}
 }

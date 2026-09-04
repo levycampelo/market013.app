@@ -35,6 +35,10 @@ export default function ListPage() {
     return () => { active = false; };
   }
 
+  function normalizeSearch(value: string) {
+    return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
+  }
+
   useEffect(() => loadProducts(), []);
 
   const categories = useMemo(() => [
@@ -43,11 +47,11 @@ export default function ListPage() {
   ], [products]);
 
   const filteredProducts = useMemo(() => {
-    const value = query.trim().toLocaleLowerCase("pt-BR");
+    const value = normalizeSearch(query.trim());
     return products.filter((product) => {
       const matchesCategory = category === "Todas" || product.category === category;
-      const matchesQuery = !value || [product.name, product.brand, product.category]
-        .filter(Boolean).join(" ").toLocaleLowerCase("pt-BR").includes(value);
+      const matchesQuery = !value || normalizeSearch([product.name, product.brand, product.category]
+        .filter(Boolean).join(" ")).includes(value);
       return matchesCategory && matchesQuery;
     });
   }, [products, query, category]);
