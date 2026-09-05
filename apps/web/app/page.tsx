@@ -25,7 +25,7 @@ export default async function HomePage() {
   return (
     <main className="shell">
       <header className="topbar">
-        <span className="mark">m013</span>
+        <img className="brand-logo" src="/img/guacamole_market013_preto.jpg" alt="market013.app" />
         <span className="status"><i /> dados locais</span>
       </header>
       <section className="intro">

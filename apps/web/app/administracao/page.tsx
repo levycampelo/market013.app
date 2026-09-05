@@ -247,7 +247,7 @@ export default function AdminPage() {
 	}[action] ?? action);
 
 	return <main className="shell admin-shell">
-		<header className="topbar"><a className="mark" href="/">m013</a><span>Administração</span></header>
+		<header className="topbar"><a className="brand-link" href="/" aria-label="market013.app"><img className="brand-logo" src="/img/guacamole_market013_preto.jpg" alt="market013.app" /></a><span>Administração</span></header>
 		{!sessionChecked && <p className="admin-empty">Verificando sua sessão...</p>}
 		{sessionChecked && !user && <section className="login-panel admin-login-panel"><p className="kicker">área restrita</p><h2>Entre para administrar.</h2><p>Faça login com Google para acessar as aprovações e a qualidade dos preços.</p><a className="compare-button" href="/api/auth/google">Entrar com Google <span>→</span></a></section>}
 		{sessionChecked && user && <>
