@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import BrandLogo from "../components/brand-logo";
 
 type Option = { id: string; name: string };
 
@@ -39,7 +40,7 @@ export default function ContributePage() {
   }
 
   return <main className="shell">
-    <header className="topbar"><a className="brand-link" href="/" aria-label="market013.app"><img className="brand-logo" src="/img/guacamole_market013_preto.jpg" alt="market013.app" /></a><span>Contribuição</span></header>
+    <header className="topbar"><a className="brand-link" href="/" aria-label="market013.app"><BrandLogo /></a><span>Contribuição</span></header>
     {!user && <section className="login-panel"><p className="kicker">colaboração identificada</p><h2>Entre para contribuir.</h2><p>Seu histórico ajuda a manter a base confiável e permite identificar abuso.</p><a className="compare-button" href="/api/auth/google">Entrar com Google <span>→</span></a></section>}
     {user && <p className="signed-user">Conectado como {user.name} · <button type="button" onClick={async () => { await fetch("/api/auth/google", { method: "POST" }); window.location.reload(); }}>sair</button></p>}
     <section className="form-heading"><p className="kicker">dados colaborativos</p><h1>Contribua um preço.</h1><p className="lede">Informe o valor que você encontrou. A contribuição entra como pendente antes de aparecer no comparador.</p></section>

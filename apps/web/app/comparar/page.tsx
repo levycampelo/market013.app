@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { bestSingleMarket, optimizeBasket, type Market, type MarketPrice, type BasketResult } from "../../../../backend/domain/optimizer";
+import BrandLogo from "../components/brand-logo";
 
 type Product = { id: string; name: string; brand: string | null; category: string | null };
 type Price = { id: string; product_id: string; supermarket_id: string; price: number; source: string; observed_at: string; supermarket_name: string; supermarket_address: string };
@@ -81,7 +82,7 @@ export default function ComparePage() {
   }
 
   return <main className="shell list-shell">
-    <header className="topbar"><a className="brand-link" href="/" aria-label="market013.app"><img className="brand-logo" src="/img/guacamole_market013_preto.jpg" alt="market013.app" /></a><span>Comparação</span></header>
+    <header className="topbar"><a className="brand-link" href="/" aria-label="market013.app"><BrandLogo /></a><span>Comparação</span></header>
     <section className="list-heading"><div><p className="kicker">preços aprovados</p><h1>Onde compensa.</h1><p className="lede">Compare os mercados encontrados para cada item da sua lista.</p></div></section>
     <section className="optimizer-settings"><p className="kicker">parâmetros do cálculo</p><div className="optimizer-fields"><label>Gasolina (R$/L)<input type="number" min="0" step="0.01" value={fuelPrice} onChange={(event) => setFuelPrice(event.target.value)} /></label><label>Consumo (km/L)<input type="number" min="0.1" step="0.1" value={vehicleEfficiency} onChange={(event) => setVehicleEfficiency(event.target.value)} /></label><button type="button" onClick={useCurrentLocation}>Usar minha localização</button></div><div className="location-fields"><label>Latitude<input type="number" step="any" value={latitude} onChange={(event) => setLatitude(event.target.value)} placeholder="-23.550520" /></label><label>Longitude<input type="number" step="any" value={longitude} onChange={(event) => setLongitude(event.target.value)} placeholder="-46.633310" /></label><span>{locationMessage}</span></div></section>
     {loading && <p className="list-message">Calculando comparação...</p>}

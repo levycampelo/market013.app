@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import BrandLogo from "../components/brand-logo";
 
 type Product = {
   id: string;
@@ -126,7 +127,7 @@ export default function ListPage() {
 
   return (
     <main className="shell list-shell">
-      <header className="topbar"><a className="brand-link" href="/" aria-label="market013.app"><img className="brand-logo" src="/img/guacamole_market013_preto.jpg" alt="market013.app" /></a><span>Minha lista</span></header>
+      <header className="topbar"><a className="brand-link" href="/" aria-label="market013.app"><BrandLogo /></a><span>Minha lista</span></header>
       <section className="list-heading">
         <div><p className="kicker">cesta de compras</p><h1>Monte sua lista.</h1><p className="lede">Escolha os produtos e veja onde a economia começa a fazer sentido.</p></div>
         <div className="list-total"><strong>{itemCount}</strong><span>itens</span></div>

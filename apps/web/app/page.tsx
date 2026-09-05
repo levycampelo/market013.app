@@ -1,4 +1,5 @@
 import { getDatabase } from "../lib/db";
+import BrandLogo from "./components/brand-logo";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,7 @@ export default async function HomePage() {
   return (
     <main className="shell">
       <header className="topbar">
-        <img className="brand-logo" src="/img/guacamole_market013_preto.jpg" alt="market013.app" />
+        <BrandLogo />
         <span className="status"><i /> dados locais</span>
       </header>
       <section className="intro">
