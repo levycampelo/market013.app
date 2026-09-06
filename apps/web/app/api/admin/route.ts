@@ -225,19 +225,19 @@ export async function DELETE(request: Request) {
 		if (!priceId) return NextResponse.json({ error: "priceId é obrigatório" }, { status: 400 });
 
 		const sql = getDatabase();
-		const previous = await sql`select id, product_id, supermarket_id, price, source, status, user_id, observed_at, created_at from prices where id = ${priceId} and status = 'aprovado'`;
+		const previous = await sql`select id, product_id, supermarket_id, price, source, status, user_id, observed_at, created_at from prices where id = ${priceId} and status in ('aprovado', 'rejeitado')`;
 		if (previous.length === 0) {
-			return NextResponse.json({ error: "Somente preços aprovados podem ser deletados" }, { status: 404 });
+			return NextResponse.json({ error: "Somente preços aprovados ou rejeitados podem ser deletados" }, { status: 404 });
 		}
 		const [prices] = await sql.transaction([
-			sql`delete from prices where id = ${priceId} and status = 'aprovado' returning id`,
+			sql`delete from prices where id = ${priceId} and status in ('aprovado', 'rejeitado') returning id`,
 			sql`
 				insert into admin_audit_logs (admin_user_id, action, entity_type, entity_id, previous_data, new_data)
 				values (${admin.id}, 'price_deleted', 'price', ${priceId}, ${JSON.stringify(previous[0])}::jsonb, null::jsonb)
 			`,
 		]);
 		if (prices.length === 0) {
-			return NextResponse.json({ error: "Somente preços aprovados podem ser deletados" }, { status: 404 });
+			return NextResponse.json({ error: "Somente preços aprovados ou rejeitados podem ser deletados" }, { status: 404 });
 		}
 		return NextResponse.json({ deleted: true, priceId });
 	} catch (error) {

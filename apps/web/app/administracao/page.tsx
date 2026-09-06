@@ -133,8 +133,8 @@ export default function AdminPage() {
 		await loadPrices();
 	}
 
-	async function deleteApprovedPrice(priceId: string) {
-		if (!window.confirm("Deletar este preço aprovado? Essa ação não pode ser desfeita.")) return;
+	async function deletePrice(priceId: string) {
+		if (!window.confirm("Deletar este preço? Essa ação não pode ser desfeita.")) return;
 		const response = await fetch("/api/admin", {
 			method: "DELETE",
 			headers: { "Content-Type": "application/json" },
@@ -145,7 +145,8 @@ export default function AdminPage() {
 			setError(body.error ?? "Não foi possível deletar o preço");
 			return;
 		}
-		await loadPrices("aprovado");
+		setError("");
+		await loadPrices();
 	}
 
 	async function saveMarket(event: FormEvent<HTMLFormElement>) {
@@ -278,7 +279,7 @@ export default function AdminPage() {
 				<div><strong>R$ {price.price.toFixed(2).replace(".", ",")}</strong><span>{price.source} · {price.contributor_name ?? "seed"}</span></div>
 				<div><span className={`admin-status status-${price.status}`}>{price.status}</span><small>{new Date(price.created_at).toLocaleString("pt-BR")}</small></div>
 				{price.status === "pendente" && <div className="admin-actions"><button className="approve-button" onClick={() => void updateStatus(price.id, "aprovado")}>Aprovar</button><button className="reject-button" onClick={() => void updateStatus(price.id, "rejeitado")}>Rejeitar</button></div>}
-				{price.status === "aprovado" && filter === "aprovado" && <div className="admin-actions"><button className="delete-button" onClick={() => void deleteApprovedPrice(price.id)}>Deletar preço</button></div>}
+				{(price.status === "aprovado" || price.status === "rejeitado") && <div className="admin-actions"><button className="delete-button" onClick={() => void deletePrice(price.id)}>Deletar preço</button></div>}
 			</article>)}
 		</section>}
 		{!loading && data && data.total > 0 && <nav className="pagination" aria-label="Paginação de preços"><span>{data.total} registro{data.total === 1 ? "" : "s"} · página {page} de {totalPages}</span><div><button disabled={page <= 1} onClick={() => { setPage((current) => current - 1); }}>Anterior</button><button disabled={page >= totalPages} onClick={() => { setPage((current) => current + 1); }}>Próxima</button></div></nav>}
