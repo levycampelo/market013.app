@@ -212,8 +212,13 @@ export async function DELETE(request: Request) {
 			if (Number(linkedPrices[0]?.count ?? 0) > 0) {
 				return NextResponse.json({ error: "Não é possível excluir um mercado que possui preços cadastrados" }, { status: 409 });
 			}
-			const markets = await sql`delete from supermarkets where id = ${marketId} returning id`;
-			await recordAudit(sql, admin.id, "market_deleted", "market", marketId, previous[0], null);
+			await sql.transaction([
+				sql`delete from supermarkets where id = ${marketId}`,
+				sql`
+					insert into admin_audit_logs (admin_user_id, action, entity_type, entity_id, previous_data, new_data)
+					values (${admin.id}, 'market_deleted', 'market', ${marketId}, ${JSON.stringify(previous[0])}::jsonb, null::jsonb)
+				`,
+			]);
 			return NextResponse.json({ deleted: true, marketId });
 		}
 		const priceId = typeof body.priceId === "string" ? body.priceId : "";
@@ -221,18 +226,28 @@ export async function DELETE(request: Request) {
 
 		const sql = getDatabase();
 		const previous = await sql`select id, product_id, supermarket_id, price, source, status, user_id, observed_at, created_at from prices where id = ${priceId} and status = 'aprovado'`;
-		const prices = await sql`
-			delete from prices
-			where id = ${priceId} and status = 'aprovado'
-			returning id
-		`;
+		if (previous.length === 0) {
+			return NextResponse.json({ error: "Somente preços aprovados podem ser deletados" }, { status: 404 });
+		}
+		const [prices] = await sql.transaction([
+			sql`delete from prices where id = ${priceId} and status = 'aprovado' returning id`,
+			sql`
+				insert into admin_audit_logs (admin_user_id, action, entity_type, entity_id, previous_data, new_data)
+				values (${admin.id}, 'price_deleted', 'price', ${priceId}, ${JSON.stringify(previous[0])}::jsonb, null::jsonb)
+			`,
+		]);
 		if (prices.length === 0) {
 			return NextResponse.json({ error: "Somente preços aprovados podem ser deletados" }, { status: 404 });
 		}
-		await recordAudit(sql, admin.id, "price_deleted", "price", priceId, previous[0], null);
 		return NextResponse.json({ deleted: true, priceId });
 	} catch (error) {
 		console.error("admin_price_delete_error", error);
+		if (error instanceof Error && error.message.includes("admin_audit_logs")) {
+			return NextResponse.json(
+				{ error: "Banco desatualizado: aplique a migration 0004_admin_audit_logs.sql no Neon" },
+				{ status: 503 },
+			);
+		}
 		return NextResponse.json({ error: "Não foi possível deletar o preço" }, { status: 500 });
 	}
 }
