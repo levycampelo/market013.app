@@ -35,6 +35,7 @@ export default async function HomePage() {
         <p className="lede">Monte sua lista, compare mercados perto de você e descubra onde a economia realmente compensa a gasolina.</p>
         <div className="actions">
           <a className="primary" href="/lista">Montar lista <span>→</span></a>
+          <a className="secondary" href="/ofertas">Melhores preços</a>
           <a className="secondary" href="/contribuir">Contribuir preço</a>
         </div>
       </section>
